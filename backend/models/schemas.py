@@ -24,3 +24,13 @@ class TitleResponse(BaseModel):
 
 class WordRequest(BaseModel):
     word: str
+
+class ApprovalRequest(BaseModel):
+    title: str
+    submitted_by: Optional[str] = "User"
+    verification_data: Optional[Dict[str, Any]] = None
+
+class ApprovalAction(BaseModel):
+    request_id: int
+    admin_name: Optional[str] = "Admin"
+    comment: Optional[str] = ""

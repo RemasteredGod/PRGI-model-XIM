@@ -52,7 +52,37 @@ def init_db():
         word TEXT UNIQUE NOT NULL
     )
     ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS approval_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        submitted_by TEXT,
+        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'pending',
+        admin_comment TEXT,
+        approved_date TIMESTAMP,
+        verification_data TEXT
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS temp2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        registration_number TEXT,
+        registration_date TEXT,
+        language TEXT,
+        periodicity TEXT,
+        publisher TEXT,
+        owner TEXT,
+        pub_state TEXT,
+        pub_district TEXT,
+        added_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        approved_by TEXT
+    )
+    ''')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_title ON titles(title)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_approval_status ON approval_requests(status)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_temp2_title ON temp2(title)')
     conn.commit()
     conn.close()
     load_titles_into_memory()
@@ -138,3 +168,97 @@ def get_disallowed_words():
     words = [row[0] for row in cursor.fetchall()]
     conn.close()
     return words
+
+def submit_approval_request(title, submitted_by="User", verification_data=None):
+    import json
+    conn = get_connection()
+    cursor = conn.cursor()
+    verification_json = json.dumps(verification_data) if verification_data else None
+    cursor.execute('''
+    INSERT INTO approval_requests (title, submitted_by, verification_data)
+    VALUES (?, ?, ?)
+    ''', (title, submitted_by, verification_json))
+    conn.commit()
+    request_id = cursor.lastrowid
+    conn.close()
+    return request_id
+
+def get_pending_requests():
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT id, title, submitted_by, submission_date, status, verification_data
+    FROM approval_requests 
+    WHERE status = 'pending'
+    ORDER BY submission_date DESC
+    ''')
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows
+
+def get_all_requests():
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('''
+    SELECT id, title, submitted_by, submission_date, status, admin_comment, approved_date
+    FROM approval_requests 
+    ORDER BY submission_date DESC
+    ''')
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows
+
+def approve_request(request_id, admin_name="Admin", comment=""):
+    import json
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # Get the request details
+    cursor.execute('SELECT title, verification_data FROM approval_requests WHERE id = ?', (request_id,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return False
+    
+    title = row[0]
+    verification_data = json.loads(row[1]) if row[1] else {}
+    
+    # Update request status
+    cursor.execute('''
+    UPDATE approval_requests 
+    SET status = 'approved', admin_comment = ?, approved_date = CURRENT_TIMESTAMP
+    WHERE id = ?
+    ''', (comment, request_id))
+    
+    # Add to temp2 database
+    cursor.execute('''
+    INSERT INTO temp2 (title, approved_by)
+    VALUES (?, ?)
+    ''', (title, admin_name))
+    
+    conn.commit()
+    conn.close()
+    return True
+
+def reject_request(request_id, admin_name="Admin", comment=""):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+    UPDATE approval_requests 
+    SET status = 'rejected', admin_comment = ?, approved_date = CURRENT_TIMESTAMP
+    WHERE id = ?
+    ''', (comment, request_id))
+    conn.commit()
+    conn.close()
+    return True
+
+def get_temp2_titles():
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM temp2 ORDER BY added_date DESC')
+    rows = [dict(row) for row in cursor.fetchall()]
+    conn.close()
+    return rows

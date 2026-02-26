@@ -3,10 +3,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from typing import List, Optional
-from backend.models.schemas import TitleRequest, TitleResponse, WordRequest
+from backend.models.schemas import TitleRequest, TitleResponse, WordRequest, ApprovalRequest, ApprovalAction
 from backend.services.similarity_engine import verify_title, load_existing_titles
 from backend.services.rules_checker import load_disallowed_words
-from backend.database import init_db, add_disallowed_word, delete_disallowed_word, get_comprehensive_stats, search_db_full, get_disallowed_words
+from backend.database import (init_db, add_disallowed_word, delete_disallowed_word, 
+                              get_comprehensive_stats, search_db_full, get_disallowed_words,
+                              submit_approval_request, get_pending_requests, get_all_requests,
+                              approve_request, reject_request, get_temp2_titles)
 
 # Global in-memory list for last 10 submissions
 RECENT_SUBMISSIONS = []
@@ -77,3 +80,43 @@ async def api_add_word(request: WordRequest):
 async def api_delete_word(word: str):
     delete_disallowed_word(word)
     return {"message": f"Word '{word}' removed", "words": get_disallowed_words()}
+
+# ── ADMIN & APPROVAL ENDPOINTS ──
+
+@app.post("/api/approval-request")
+async def api_submit_approval_request(request: ApprovalRequest):
+    if not request.title or not request.title.strip():
+        raise HTTPException(status_code=400, detail="Title cannot be empty")
+    
+    request_id = submit_approval_request(
+        request.title.strip(), 
+        request.submitted_by,
+        request.verification_data
+    )
+    return {"message": "Request submitted successfully", "request_id": request_id}
+
+@app.get("/api/admin/requests")
+async def api_get_all_requests():
+    return get_all_requests()
+
+@app.get("/api/admin/pending-requests")
+async def api_get_pending_requests():
+    return get_pending_requests()
+
+@app.post("/api/admin/approve")
+async def api_approve_request(action: ApprovalAction):
+    success = approve_request(action.request_id, action.admin_name, action.comment)
+    if not success:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"message": "Request approved and added to temp2 database"}
+
+@app.post("/api/admin/reject")
+async def api_reject_request(action: ApprovalAction):
+    success = reject_request(action.request_id, action.admin_name, action.comment)
+    if not success:
+        raise HTTPException(status_code=404, detail="Request not found")
+    return {"message": "Request rejected"}
+
+@app.get("/api/admin/temp2")
+async def api_get_temp2():
+    return get_temp2_titles()
