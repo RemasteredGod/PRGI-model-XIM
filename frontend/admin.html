@@ -556,14 +556,85 @@
         </button>
         <button class="tab-btn" data-tab="all">All Requests</button>
         <button class="tab-btn" data-tab="temp2">Temp2 Database</button>
+        <button class="tab-btn" data-tab="rejected">Rejected Titles</button>
+        <a
+          href="admin-review.html"
+          class="tab-btn"
+          style="
+            margin-left: auto;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border-color: rgba(185, 28, 28, 0.3);
+          "
+        >
+          Excel Review →
+        </a>
       </div>
 
       <!-- Tab Content: Pending Requests -->
       <div id="tab-pending" class="tab-content">
+
+        <!-- Batch Action Bar -->
+        <div
+          style="
+            margin-bottom: 20px;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: var(--r);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+          "
+        >
+          <span
+            style="color: var(--text-2); font-size: 13px; margin-right: auto"
+          >
+            <span id="selectedCount">0</span> selected
+          </span>
+          <button
+            class="btn-action btn-success"
+            onclick="batchApproveSelected()"
+            style="padding: 8px 16px; font-size: 13px"
+          >
+            ✓ Approve Selected
+          </button>
+          <button
+            class="btn-action btn-success"
+            onclick="batchApproveAll()"
+            style="padding: 8px 16px; font-size: 13px; background: #16a34a"
+          >
+            ✓ Approve All
+          </button>
+          <button
+            class="btn-action btn-danger"
+            onclick="batchRejectSelected()"
+            style="padding: 8px 16px; font-size: 13px"
+          >
+            ✗ Reject Selected
+          </button>
+          <button
+            class="btn-action btn-danger"
+            onclick="batchRejectAll()"
+            style="padding: 8px 16px; font-size: 13px; background: #b91c1c"
+          >
+            ✗ Reject All
+          </button>
+        </div>
+
         <div class="table-container">
           <table>
             <thead>
               <tr>
+                <th style="width: 40px">
+                  <input
+                    type="checkbox"
+                    id="selectAllPending"
+                    onchange="toggleSelectAll()"
+                    style="cursor: pointer"
+                  />
+                </th>
                 <th>Title</th>
                 <th>Submitted By</th>
                 <th>Date</th>
@@ -665,6 +736,48 @@
                     >
                       <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
                       <path d="M22 12A10 10 0 0 0 12 2v10z" />
+                    </svg>
+                    <p>Loading...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab Content: Rejected Titles -->
+      <div id="tab-rejected" class="tab-content" style="display: none">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Score</th>
+                <th>Rejection Type</th>
+                <th>Reason</th>
+                <th>Rejected Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rejected-table-body">
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="15" y1="9" x2="9" y2="15" />
+                      <line x1="9" y1="9" x2="15" y2="15" />
                     </svg>
                     <p>Loading...</p>
                   </div>
@@ -868,6 +981,7 @@
           loadPendingRequests(),
           loadAllRequests(),
           loadTemp2Data(),
+          loadRejectedTitles(),
           updateStats(),
         ]);
       }
@@ -881,7 +995,7 @@
           if (data.length === 0) {
             tbody.innerHTML = `
                         <tr>
-                            <td colspan="4">
+                            <td colspan="5">
                                 <div class="empty-state">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
                                     <p>No pending requests</p>
@@ -896,6 +1010,9 @@
             .map(
               (req) => `
                     <tr>
+                        <td>
+                            <input type="checkbox" class="request-checkbox" value="${req.id}" onchange="updateSelectedCount()" style="cursor: pointer;">
+                        </td>
                         <td><strong style="color: var(--text-1);">${req.title}</strong></td>
                         <td>${req.submitted_by || 'User'}</td>
                         <td>${new Date(req.submission_date).toLocaleString()}</td>
@@ -997,6 +1114,81 @@
             .join('');
         } catch (err) {
           console.error('Error loading temp2 data:', err);
+        }
+      }
+
+      async function loadRejectedTitles() {
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/rejected-titles?limit=100`);
+          const data = await res.json();
+          const tbody = document.getElementById('rejected-table-body');
+
+          if (data.length === 0) {
+            tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                    <p>No rejected titles found</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+            return;
+          }
+
+          tbody.innerHTML = data
+            .map(
+              (item) => `
+                    <tr>
+                        <td><strong style="color: var(--text-1);">${item.title}</strong></td>
+                        <td><span style="color: var(--${item.evaluation_score >= 50 ? 'yellow' : 'accent'});">${item.evaluation_score ? item.evaluation_score.toFixed(1) + '%' : 'N/A'}</span></td>
+                        <td><span class="badge badge-${item.rejection_type === 'AUTO' ? 'rejected' : 'pending'}">${item.rejection_type}</span></td>
+                        <td style="max-width: 300px; white-space: normal;">${item.rejection_reason || 'No reason provided'}</td>
+                        <td>${new Date(item.rejected_date).toLocaleString()}</td>
+                        <td>
+                            <button class="btn-icon" onclick="toggleRetryStatus(${item.id}, ${item.retry_allowed})" title="${item.retry_allowed ? 'Block retry' : 'Allow retry'}">
+                                ${item.retry_allowed ? '<i data-lucide="lock-open"></i>' : '<i data-lucide="lock"></i>'}
+                            </button>
+                        </td>
+                    </tr>
+                `,
+            )
+            .join('');
+          
+          lucide.createIcons();
+        } catch (err) {
+          console.error('Error loading rejected titles:', err);
+        }
+      }
+
+      async function toggleRetryStatus(rejectedId, currentStatus) {
+        const newStatus = !currentStatus;
+        const action = newStatus ? 'allow' : 'block';
+        
+        if (!confirm(`Are you sure you want to ${action} retry for this rejected title?`)) {
+          return;
+        }
+
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/admin/rejected-titles/${rejectedId}/allow-retry`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ retry_allowed: newStatus }),
+            }
+          );
+
+          if (res.ok) {
+            alert(`Retry status updated successfully!`);
+            loadRejectedTitles();
+          } else {
+            alert('Failed to update retry status');
+          }
+        } catch (err) {
+          console.error('Error updating retry status:', err);
+          alert('Error updating retry status');
         }
       }
 
@@ -1150,6 +1342,149 @@
 
       function closeModal(modalId) {
         document.getElementById(modalId).classList.remove('active');
+      }
+
+      // ── BATCH OPERATIONS ──
+
+      function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAllPending');
+        const checkboxes = document.querySelectorAll('.request-checkbox');
+        checkboxes.forEach((cb) => (cb.checked = selectAll.checked));
+        updateSelectedCount();
+      }
+
+      function updateSelectedCount() {
+        const selected = document.querySelectorAll('.request-checkbox:checked');
+        document.getElementById('selectedCount').textContent = selected.length;
+        document.getElementById('selectAllPending').checked =
+          selected.length ===
+            document.querySelectorAll('.request-checkbox').length &&
+          selected.length > 0;
+      }
+
+      function getSelectedIds() {
+        return Array.from(
+          document.querySelectorAll('.request-checkbox:checked'),
+        ).map((cb) => parseInt(cb.value));
+      }
+
+      async function batchApproveSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+          alert('Please select at least one request');
+          return;
+        }
+
+        if (!confirm(`Approve ${ids.length} selected request(s)?`)) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/batch-approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ request_ids: ids, admin_name: 'admin' }),
+          });
+
+          if (res.ok) {
+            alert(`✓ Approved ${ids.length} request(s)`);
+            await loadData();
+          } else {
+            throw new Error('Failed to approve');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function batchApproveAll() {
+        const count = document.querySelectorAll('.request-checkbox').length;
+        if (count === 0) {
+          alert('No pending requests to approve');
+          return;
+        }
+
+        if (!confirm(`Approve ALL ${count} pending requests?`)) return;
+
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/admin/batch-approve-all-requests`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ admin_name: 'admin' }),
+            },
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            alert(`✓ Approved ${data.approved_count} request(s)`);
+            await loadData();
+          } else {
+            throw new Error('Failed to approve all');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function batchRejectSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+          alert('Please select at least one request');
+          return;
+        }
+
+        if (!confirm(`Reject ${ids.length} selected request(s)?`)) return;
+
+        try {
+          const res = await fetch(`${API_BASE}/api/admin/batch-reject`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              request_ids: ids,
+              reason: 'Batch rejection',
+            }),
+          });
+
+          if (res.ok) {
+            alert(`✓ Rejected ${ids.length} request(s)`);
+            await loadData();
+          } else {
+            throw new Error('Failed to reject');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function batchRejectAll() {
+        const count = document.querySelectorAll('.request-checkbox').length;
+        if (count === 0) {
+          alert('No pending requests to reject');
+          return;
+        }
+
+        if (!confirm(`REJECT ALL ${count} pending requests?`)) return;
+
+        try {
+          const res = await fetch(
+            `${API_BASE}/api/admin/batch-reject-all-requests`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason: 'Batch rejection' }),
+            },
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            alert(`✓ Rejected ${data.rejected_count} request(s)`);
+            await loadData();
+          } else {
+            throw new Error('Failed to reject all');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
       }
 
       // Close modal on background click

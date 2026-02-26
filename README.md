@@ -19,7 +19,7 @@ pip install -r backend/requirements.txt
 ```
 3. Run the FastAPI server:
 ```bash
-uvicorn backend.main:app --reload
+uvicorn backend.main:app --reload --port 8000
 ```
 The API will be hosted at `http://127.0.0.1:8000`. You can test endpoints via `http://127.0.0.1:8000/docs`.
 
@@ -28,8 +28,12 @@ The API will be hosted at `http://127.0.0.1:8000`. You can test endpoints via `h
 2. Serve the frontend using a static python server:
 ```bash
 cd frontend
-python -m http.server 8000
+python -m http.server 5500
 ```
-*(Note: If port 8000 is used by FastAPI, run the frontend on a different port like `python -m http.server 8080`)*
+**Note:** The frontend runs on port **5500**, while FastAPI runs on port **8000**. The frontend is configured to make API calls to port 8000.
 
-3. Open the browser and navigate to the frontend port (e.g., `http://localhost:8080`).
+3. Open the browser and navigate to:
+   - Main page: `http://localhost:5500/index.html`
+   - Admin panel: `http://localhost:5500/admin.html`
+   - Batch upload: `http://localhost:5500/batch.html`
+   - Admin review: `http://localhost:5500/admin-review.html`

@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PRGI Admin - Excel Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      :root {
+        --bg: #06060c;
+        --surface: #0c0c16;
+        --surface-2: #111120;
+        --border: #1c1c2e;
+        --accent: #b91c1c;
+        --accent-hover: #dc2626;
+        --text-1: #f1f5f9;
+        --text-2: #94a3b8;
+        --text-3: #475569;
+        --green: #16a34a;
+        --yellow: #d97706;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text-1);
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 14px;
+      }
+
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+      }
+
+      .navbar {
+        height: 54px;
+        background: rgba(6, 6, 12, 0.9);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 28px;
+      }
+      .nav-brand {
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 15px;
+        color: var(--text-1);
+      }
+      .nav-links {
+        display: flex;
+        gap: 12px;
+      }
+      .nav-btn {
+        padding: 8px 14px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-2);
+        text-decoration: none;
+        font-size: 13px;
+      }
+
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 28px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .title {
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .control-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-3);
+        text-transform: uppercase;
+      }
+      .slider-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      input[type='range'] {
+        width: 200px;
+        height: 6px;
+        background: var(--surface-2);
+        border-radius: 3px;
+        outline: none;
+      }
+      .slider-value {
+        min-width: 45px;
+        text-align: center;
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      .btn {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn-success {
+        background: var(--green);
+        color: white;
+      }
+
+      /* Excel-like Table */
+      .table-wrapper {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .table-container {
+        overflow-x: auto;
+        max-height: calc(100vh - 300px);
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      thead {
+        position: sticky;
+        top: 0;
+        background: var(--surface-2);
+        z-index: 10;
+      }
+      th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-2);
+        border-bottom: 2px solid var(--border);
+        white-space: nowrap;
+      }
+      th input[type='checkbox'] {
+        cursor: pointer;
+      }
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-2);
+        font-size: 13px;
+      }
+      tbody tr {
+        transition: background 0.1s;
+      }
+      tbody tr:hover {
+        background: var(--surface-2);
+      }
+      tbody tr.selected {
+        background: rgba(185, 28, 28, 0.1);
+      }
+
+      .verdict-badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      .verdict-approved {
+        background: rgba(22, 163, 74, 0.2);
+        color: var(--green);
+      }
+      .verdict-rejected {
+        background: rgba(185, 28, 28, 0.2);
+        color: var(--accent);
+      }
+
+      .actions {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
+      .selection-count {
+        padding: 10px 16px;
+        background: var(--surface-2);
+        border-radius: 6px;
+        font-weight: 600;
+      }
+
+      /* Modal */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+      .modal-content {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 24px;
+        max-width: 400px;
+        width: 100%;
+      }
+      .modal-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+      }
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-2);
+        margin-bottom: 6px;
+      }
+      .form-input {
+        width: 100%;
+        padding: 10px 12px;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-1);
+        font-size: 13px;
+      }
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar">
+      <a href="admin.html" class="nav-brand">PRGI Admin - Excel Review</a>
+      <div class="nav-links">
+        <a href="batch.html" class="nav-btn">Batch Upload</a>
+        <a href="admin.html" class="nav-btn">Dashboard</a>
+        <button class="nav-btn" onclick="logout()">Logout</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="header">
+        <h1 class="title">Temp2 Database - Review & Approve</h1>
+        <div style="display: flex; gap: 12px">
+          <button class="btn btn-primary" onclick="refreshData()">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 16h5v5" />
+            </svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <label class="control-label">Acceptance Ratio Threshold</label>
+          <div class="slider-container">
+            <input
+              type="range"
+              id="acceptanceSlider"
+              min="0"
+              max="100"
+              value="60"
+            />
+            <span class="slider-value" id="sliderValue">60%</span>
+            <button
+              class="btn btn-primary"
+              style="padding: 6px 12px; font-size: 12px"
+              onclick="saveRatio()"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Filter by Status</label>
+          <select
+            id="filterStatus"
+            style="
+              padding: 8px 12px;
+              background: var(--surface-2);
+              border: 1px solid var(--border);
+              border-radius: 6px;
+              color: var(--text-1);
+            "
+          >
+            <option value="all">All Titles</option>
+            <option value="pending" selected>Pending Review</option>
+            <option value="approved">Already Approved</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" /></th>
+                <th>Title</th>
+                <th>Verdict</th>
+                <th>Probability</th>
+                <th>Submitted By</th>
+                <th>Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td
+                  colspan="7"
+                  style="
+                    text-align: center;
+                    padding: 40px;
+                    color: var(--text-3);
+                  "
+                >
+                  Loading...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="actions" id="actionsBar" style="display: none">
+        <div class="selection-count" id="selectionCount">0 selected</div>
+        <button class="btn btn-success" onclick="approveSelected()">
+          ✓ Move Selected to Original DB
+        </button>
+        <button
+          class="btn btn-success"
+          onclick="approveAll()"
+          style="background: #16a34a"
+        >
+          ✓ Accept All
+        </button>
+        <button
+          class="btn btn-primary"
+          onclick="approveByScore(40)"
+          style="background: #d97706"
+        >
+          ✓ Accept ≥40% Score
+        </button>
+        <button
+          class="btn btn-danger"
+          onclick="rejectAll()"
+          style="background: #b91c1c"
+        >
+          ✗ Reject All
+        </button>
+        <button class="btn btn-primary" onclick="clearSelection()">
+          Clear Selection
+        </button>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal active">
+      <div class="modal-content">
+        <h2 class="modal-title">Admin Login</h2>
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input
+            type="text"
+            id="username"
+            class="form-input"
+            placeholder="admin"
+          />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="Enter password"
+          />
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" style="width: 100%" onclick="login()">
+            Login
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = 'http://127.0.0.1:8000/api';
+      let allData = [];
+      let selectedIds = new Set();
+
+      const slider = document.getElementById('acceptanceSlider');
+      const sliderValue = document.getElementById('sliderValue');
+
+      slider.addEventListener('input', () => {
+        sliderValue.textContent = slider.value + '%';
+      });
+
+      document
+        .getElementById('selectAll')
+        .addEventListener('change', function () {
+          const checkboxes = document.querySelectorAll(
+            'tbody input[type="checkbox"]',
+          );
+          checkboxes.forEach((cb) => {
+            cb.checked = this.checked;
+            const id = parseInt(cb.dataset.id);
+            if (this.checked) {
+              selectedIds.add(id);
+              cb.closest('tr').classList.add('selected');
+            } else {
+              selectedIds.delete(id);
+              cb.closest('tr').classList.remove('selected');
+            }
+          });
+          updateSelection();
+        });
+
+      async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        try {
+          const res = await fetch(`${API}/admin/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+          });
+
+          if (res.ok) {
+            document.getElementById('loginModal').classList.remove('active');
+            await loadConfig();
+            await refreshData();
+          } else {
+            alert('Invalid credentials. Default is admin/admin123');
+          }
+        } catch (err) {
+          alert('Error connecting to server');
+        }
+      }
+
+      function logout() {
+        document.getElementById('loginModal').classList.add('active');
+        selectedIds.clear();
+        allData = [];
+      }
+
+      async function loadConfig() {
+        try {
+          const res = await fetch(`${API}/admin/config/acceptance-ratio`);
+          const data = await res.json();
+          slider.value = data.acceptance_ratio;
+          sliderValue.textContent = data.acceptance_ratio + '%';
+        } catch (err) {
+          console.error('Error loading config:', err);
+        }
+      }
+
+      async function saveRatio() {
+        try {
+          await fetch(`${API}/admin/config/acceptance-ratio`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ratio: parseInt(slider.value) }),
+          });
+          alert('Acceptance ratio updated!');
+        } catch (err) {
+          alert('Error saving ratio');
+        }
+      }
+
+      async function refreshData() {
+        try {
+          // Get all batch results and approval requests
+          const [temp2Res, requestsRes] = await Promise.all([
+            fetch(`${API}/admin/temp2`),
+            fetch(`${API}/admin/requests`),
+          ]);
+
+          const temp2Data = await temp2Res.json();
+          const requestsData = await requestsRes.json();
+
+          // Combine data
+          allData = [
+            ...temp2Data.map((item) => ({
+              id: `temp2_${item.id}`,
+              title: item.title,
+              verdict: 'APPROVED',
+              probability: 100,
+              submitted_by: item.approved_by || 'Batch',
+              date: item.added_date,
+              status: 'In Temp2 DB',
+              type: 'temp2',
+              original_id: item.id,
+            })),
+            ...requestsData
+              .filter((r) => r.status === 'approved')
+              .map((item) => {
+                let verData = {};
+                try {
+                  verData = JSON.parse(item.verification_data || '{}');
+                } catch (e) {}
+                return {
+                  id: `request_${item.id}`,
+                  title: item.title,
+                  verdict: verData.verdict || 'PENDING',
+                  probability: verData.approval_probability || 0,
+                  submitted_by: item.submitted_by || 'User',
+                  date: item.approved_date || item.submission_date,
+                  status: 'Pending Review',
+                  type: 'request',
+                  original_id: item.id,
+                };
+              }),
+          ];
+
+          renderTable();
+        } catch (err) {
+          console.error('Error loading data:', err);
+          alert('Error loading data');
+        }
+      }
+
+      function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const filter = document.getElementById('filterStatus').value;
+
+        let filtered = allData;
+        if (filter === 'pending') {
+          filtered = allData.filter((item) => item.status === 'Pending Review');
+        } else if (filter === 'approved') {
+          filtered = allData.filter((item) => item.status === 'In Temp2 DB');
+        }
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-3);">
+                            No data to display
+                        </td>
+                    </tr>
+                `;
+          return;
+        }
+
+        tbody.innerHTML = filtered
+          .map(
+            (item) => `
+                <tr class="${selectedIds.has(item.id) ? 'selected' : ''}">
+                    <td>
+                        <input type="checkbox" 
+                               ${selectedIds.has(item.id) ? 'checked' : ''}
+                               data-id="${item.id}"
+                               onchange="toggleSelection('${item.id}', this)">
+                    </td>
+                    <td><strong style="color: var(--text-1);">${item.title}</strong></td>
+                    <td>
+                        <span class="verdict-badge verdict-${item.verdict.toLowerCase()}">
+                            ${item.verdict}
+                        </span>
+                    </td>
+                    <td>${Math.round(item.probability)}%</td>
+                    <td>${item.submitted_by}</td>
+                    <td>${new Date(item.date).toLocaleString()}</td>
+                    <td>${item.status}</td>
+                </tr>
+            `,
+          )
+          .join('');
+      }
+
+      function toggleSelection(id, checkbox) {
+        if (checkbox.checked) {
+          selectedIds.add(id);
+          checkbox.closest('tr').classList.add('selected');
+        } else {
+          selectedIds.delete(id);
+          checkbox.closest('tr').classList.remove('selected');
+        }
+        updateSelection();
+      }
+
+      function updateSelection() {
+        const actionsBar = document.getElementById('actionsBar');
+        const count = document.getElementById('selectionCount');
+
+        if (selectedIds.size > 0) {
+          actionsBar.style.display = 'flex';
+          count.textContent = `${selectedIds.size} selected`;
+        } else {
+          actionsBar.style.display = 'none';
+        }
+      }
+
+      function clearSelection() {
+        selectedIds.clear();
+        document
+          .querySelectorAll('tbody input[type="checkbox"]')
+          .forEach((cb) => {
+            cb.checked = false;
+            cb.closest('tr').classList.remove('selected');
+          });
+        document.getElementById('selectAll').checked = false;
+        updateSelection();
+      }
+
+      async function approveSelected() {
+        if (selectedIds.size === 0) return;
+
+        if (
+          !confirm(
+            `Move ${selectedIds.size} title(s) to the Original Database?`,
+          )
+        )
+          return;
+
+        // Here you would implement the actual database move
+        // For now, we'll just simulate it
+        alert(
+          `${selectedIds.size} titles would be moved to Original DB\n\n(Database migration logic to be implemented based on your schema)`,
+        );
+
+        clearSelection();
+        await refreshData();
+      }
+
+      async function approveAll() {
+        if (
+          !confirm(`Accept ALL ${allData.length} titles from temp2 database?`)
+        )
+          return;
+
+        try {
+          const res = await fetch(`${API}/admin/batch-approve-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_name: 'admin' }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            alert(
+              `✓ Success! ${data.approved_count} titles moved to Original DB`,
+            );
+            clearSelection();
+            await refreshData();
+          } else {
+            throw new Error('Failed to approve all');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function rejectAll() {
+        if (
+          !confirm(
+            `REJECT ALL ${allData.length} titles from temp2 database? This will delete them.`,
+          )
+        )
+          return;
+
+        try {
+          const res = await fetch(`${API}/admin/batch-reject-all`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            alert(
+              `✓ ${data.deleted_count} titles have been rejected and deleted`,
+            );
+            clearSelection();
+            await refreshData();
+          } else {
+            throw new Error('Failed to reject all');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      async function approveByScore(minScore) {
+        const qualifiedTitles = allData.filter((item) => {
+          const score = parseFloat(item.confidence_score) || 0;
+          return score >= minScore;
+        });
+
+        if (qualifiedTitles.length === 0) {
+          alert(`No titles found with score ≥${minScore}%`);
+          return;
+        }
+
+        if (
+          !confirm(
+            `Accept ${qualifiedTitles.length} titles with score ≥${minScore}%?`,
+          )
+        )
+          return;
+
+        try {
+          const titleIds = qualifiedTitles.map((t) => t.id);
+          const res = await fetch(`${API}/admin/batch-approve-by-score`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title_ids: titleIds,
+              admin_name: 'admin',
+              min_score: minScore,
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            alert(
+              `✓ Success! ${data.approved_count} titles with score ≥${minScore}% moved to Original DB`,
+            );
+            clearSelection();
+            await refreshData();
+          } else {
+            throw new Error('Failed to approve by score');
+          }
+        } catch (err) {
+          alert('Error: ' + err.message);
+        }
+      }
+
+      document
+        .getElementById('filterStatus')
+        .addEventListener('change', renderTable);
+
+      // Enter key for login
+      document.getElementById('password').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login();
+      });
+
+      lucide.createIcons();
+    </script>
+  </body>
+</html>

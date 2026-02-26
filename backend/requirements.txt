@@ -6,3 +6,5 @@ pandas
 python-multipart
 pydantic>=2.0
 deep-translator
+openpyxl
+xlrd

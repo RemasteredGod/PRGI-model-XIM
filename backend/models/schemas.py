@@ -14,6 +14,22 @@ class PriorityGroup(BaseModel):
     label: str
     matches: List[SimilarityResult]
 
+class EvaluationMetrics(BaseModel):
+    """Breakdown of evaluation scoring metrics"""
+    max_similarity: float
+    rule_compliance: float
+    prefix_suffix: float
+    combination: float
+
+class RejectionHistory(BaseModel):
+    """History of rejections for a title"""
+    is_rejected: bool
+    count: int
+    last_rejected: Optional[str] = None
+    reasons: List[str] = []
+    rejection_type: Optional[str] = None
+    retry_allowed: bool = True
+
 class TitleResponse(BaseModel):
     title: str
     approval_probability: float
@@ -21,6 +37,12 @@ class TitleResponse(BaseModel):
     rejection_reasons: List[str]
     priority_matches: List[PriorityGroup]
     checks: Dict[str, Any]
+    # New evaluation fields (optional for backward compatibility)
+    evaluation_score: Optional[float] = None
+    decision: Optional[str] = None
+    evaluation_metrics: Optional[Dict[str, float]] = None
+    rejection_history: Optional[Dict[str, Any]] = None
+    message: Optional[str] = None
 
 class WordRequest(BaseModel):
     word: str
@@ -34,3 +56,11 @@ class ApprovalAction(BaseModel):
     request_id: int
     admin_name: Optional[str] = "Admin"
     comment: Optional[str] = ""
+
+class BatchApproval(BaseModel):
+    title_ids: List[int]
+    admin_name: Optional[str] = "Admin"
+
+class AdminLogin(BaseModel):
+    username: str
+    password: str
