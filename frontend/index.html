@@ -443,7 +443,7 @@
         color: var(--yellow);
         border-bottom: 1px solid rgba(217, 119, 6, 0.15);
       }
-      
+
       .rejection-warning {
         background: rgba(217, 119, 6, 0.1);
         border: 1px solid rgba(217, 119, 6, 0.2);
@@ -1351,12 +1351,13 @@
 
         // Use new decision if available, fallback to verdict
         const decision = data.decision || data.verdict;
-        const approved = decision === 'AUTO_APPROVED' || decision === 'APPROVED';
+        const approved =
+          decision === 'AUTO_APPROVED' || decision === 'APPROVED';
         const autoRejected = decision === 'AUTO_REJECT';
         const pendingAdmin = decision === 'PENDING_ADMIN';
-        
+
         const banner = document.getElementById('statusBanner');
-        
+
         // Set banner class and message based on decision
         if (autoRejected) {
           banner.className = 'result-banner banner-rejected';
@@ -1369,14 +1370,19 @@
           banner.innerHTML = `<i data-lucide="check-circle"></i> ${data.message || 'Title Approved — Meets compliance requirements'}`;
         } else {
           // Fallback for old format
-          banner.className = 'result-banner ' + (approved ? 'banner-approved' : 'banner-rejected');
+          banner.className =
+            'result-banner ' +
+            (approved ? 'banner-approved' : 'banner-rejected');
           banner.innerHTML = approved
             ? `<i data-lucide="check-circle"></i> Title Approved — Meets compliance requirements`
             : `<i data-lucide="x-circle"></i> Title Rejected — Does not meet requirements`;
         }
 
         // Use evaluation_score if available, fallback to approval_probability
-        const score = data.evaluation_score !== undefined ? data.evaluation_score : data.approval_probability;
+        const score =
+          data.evaluation_score !== undefined
+            ? data.evaluation_score
+            : data.approval_probability;
         const prob = Math.round(score);
         const color = probColor(prob);
         const fill = document.getElementById('probRingFill');
@@ -1389,9 +1395,9 @@
         document.getElementById('probTitle').innerText = approved
           ? 'Likely to be Approved'
           : pendingAdmin
-          ? 'Pending Review'
-          : 'Likely to be Rejected';
-        
+            ? 'Pending Review'
+            : 'Likely to be Rejected';
+
         // Show metrics breakdown if available
         if (data.evaluation_metrics) {
           const metrics = data.evaluation_metrics;
@@ -1407,7 +1413,7 @@
             ? 'Low similarity with existing titles. Meets all compliance guidelines.'
             : 'Flagged for similarity with existing titles or compliance violations.';
         }
-        
+
         // Show rejection history warning if applicable
         if (data.rejection_history && data.rejection_history.is_rejected) {
           const hist = data.rejection_history;

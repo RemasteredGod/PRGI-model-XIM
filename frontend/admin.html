@@ -573,7 +573,6 @@
 
       <!-- Tab Content: Pending Requests -->
       <div id="tab-pending" class="tab-content">
-
         <!-- Batch Action Bar -->
         <div
           style="
@@ -1119,7 +1118,9 @@
 
       async function loadRejectedTitles() {
         try {
-          const res = await fetch(`${API_BASE}/api/admin/rejected-titles?limit=100`);
+          const res = await fetch(
+            `${API_BASE}/api/admin/rejected-titles?limit=100`,
+          );
           const data = await res.json();
           const tbody = document.getElementById('rejected-table-body');
 
@@ -1155,7 +1156,7 @@
                 `,
             )
             .join('');
-          
+
           lucide.createIcons();
         } catch (err) {
           console.error('Error loading rejected titles:', err);
@@ -1165,8 +1166,12 @@
       async function toggleRetryStatus(rejectedId, currentStatus) {
         const newStatus = !currentStatus;
         const action = newStatus ? 'allow' : 'block';
-        
-        if (!confirm(`Are you sure you want to ${action} retry for this rejected title?`)) {
+
+        if (
+          !confirm(
+            `Are you sure you want to ${action} retry for this rejected title?`,
+          )
+        ) {
           return;
         }
 
@@ -1177,7 +1182,7 @@
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ retry_allowed: newStatus }),
-            }
+            },
           );
 
           if (res.ok) {
