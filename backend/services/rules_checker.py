@@ -1,6 +1,6 @@
 import json
 import os
-from backend.database import get_disallowed_words, get_titles_set
+from backend.database import get_disallowed_words, get_titles_set, WORD_INDEX
 
 def load_disallowed_words():
     words = get_disallowed_words()
@@ -52,12 +52,21 @@ def check_rules_detailed(title: str, existing_titles: list[str]) -> dict:
     # 4. Refined Combination Detection
     if len(title_words) >= 3:
         stop_words = {"THE", "AND", "OF", "FOR", "IN", "TO", "A", "AN"}
+
+        # Use WORD_INDEX reverse lookup: O(unique words) instead of O(70k)
+        candidates: set = set()
+        for word in title_words:
+            if word not in stop_words and len(word) >= 3:
+                candidates.update(WORD_INDEX.get(word, set()))
+        # Fallback to full scan if index not built yet
+        if not candidates and existing_titles:
+            candidates = set(existing_titles)
+
         found_existing_titles = []
-        
-        for ex in existing_titles:
+        for ex in candidates:
             if len(ex) < 4 or ex in stop_words:
                 continue
-            
+
             if f" {ex} " in f" {title_upper} " or title_upper.startswith(f"{ex} ") or title_upper.endswith(f" {ex}"):
                 found_existing_titles.append(ex)
         

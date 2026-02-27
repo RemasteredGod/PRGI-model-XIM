@@ -741,49 +741,119 @@
         gap: 8px;
       }
 
+      /* ── EXCEL-STYLE DATABASE TABLE ── */
       .table-scroll {
-        overflow-x: auto;
-        max-height: 500px;
+        overflow: auto;
+        max-height: 560px;
+        border: 1px solid #1e3a5f;
+        border-radius: 4px;
       }
       table {
         width: 100%;
         border-collapse: collapse;
+        font-size: 12px;
+        font-family: 'Consolas', 'Courier New', monospace;
       }
       thead tr {
-        background: var(--surface-2);
+        background: #0d2137;
         position: sticky;
         top: 0;
         z-index: 2;
       }
       th {
-        padding: 9px 13px;
+        padding: 7px 10px;
         text-align: left;
         font-size: 11px;
-        font-weight: 600;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.7px;
-        color: var(--text-3);
-        border-bottom: 1px solid var(--border);
+        letter-spacing: 0.5px;
+        color: #7dd3fc;
+        border-right: 1px solid #1e3a5f;
+        border-bottom: 2px solid #1e3a5f;
         cursor: pointer;
         white-space: nowrap;
         user-select: none;
+        background: #0a1929;
       }
-      th:hover {
-        color: var(--text-2);
-      }
+      th:first-child { color: #475569; min-width: 40px; text-align: center; }
+      th:hover { color: #bae6fd; background: #0d2137; }
       td {
-        padding: 9px 13px;
+        padding: 5px 10px;
+        border-right: 1px solid var(--border);
         border-bottom: 1px solid var(--border);
-        font-size: 13px;
-        color: var(--text-2);
+        font-size: 12px;
+        color: #cbd5e1;
+        white-space: nowrap;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      td:first-child {
+        color: var(--text-3);
+        text-align: center;
+        background: #0a0f18;
+        font-family: 'Inter', sans-serif;
+        font-size: 11px;
+        border-right: 2px solid #1e3a5f;
+        min-width: 40px;
       }
       td.t-name {
+        font-weight: 600;
+        color: #e2e8f0;
+        font-family: 'Inter', sans-serif;
+      }
+      tbody tr:nth-child(even) { background: rgba(255,255,255,0.018); }
+      tbody tr:nth-child(odd)  { background: transparent; }
+      tbody tr:hover { background: rgba(59,130,246,0.1) !important; }
+      tbody tr:hover td { color: #f1f5f9; }
+      td.editable { cursor: text; }
+      td.editable:hover { background: rgba(125,211,252,0.08) !important; outline: 1px dashed #3b82f6; }
+      td.editable.editing { outline: 2px solid var(--neon); background: rgba(0,200,255,0.06) !important; padding: 0; }
+
+      /* ── SUGGESTIONS ── */
+      .suggestions-box {
+        margin-top: 20px;
+        padding: 16px;
+        background: rgba(14, 165, 233, 0.06);
+        border: 1px solid rgba(14, 165, 233, 0.2);
+        border-radius: 10px;
+      }
+      .suggestions-box h4 {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: var(--neon);
+        margin: 0 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .suggestion-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: rgba(14, 165, 233, 0.1);
+        border: 1px solid rgba(14, 165, 233, 0.3);
+        border-radius: 20px;
+        font-size: 13px;
         font-weight: 500;
-        color: var(--text-1);
+        color: #7dd3fc;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
       }
-      tbody tr:hover {
-        background: var(--surface-2);
+      .suggestion-chip:hover {
+        background: rgba(14, 165, 233, 0.2);
+        border-color: rgba(14, 165, 233, 0.55);
+        color: #e0f2fe;
       }
+      .suggestion-chip svg { opacity: 0.7; }
 
       /* ── STATS ── */
       .stats-grid {
@@ -1065,6 +1135,7 @@
 
                 <div id="reasonsArea"></div>
                 <div id="similarTitlesArea"></div>
+                <div id="suggestionsArea"></div>
 
                 <!-- Request Approval Button -->
                 <div
@@ -1134,8 +1205,8 @@
             <input type="text" id="filter-district" placeholder="District" />
             <input type="text" id="filter-lang" placeholder="Language" />
             <select id="filter-limit">
-              <option value="50">50 results</option>
-              <option value="100" selected>100 results</option>
+              <option value="50" selected>50 results (fast)</option>
+              <option value="100">100 results</option>
               <option value="500">500 results</option>
             </select>
           </div>
@@ -1175,6 +1246,7 @@
                   <th onclick="sortTable(6)">Publisher</th>
                   <th onclick="sortTable(7)">Owner</th>
                   <th onclick="sortTable(8)">State</th>
+                  <th onclick="sortTable(9)">District</th>
                 </tr>
               </thead>
               <tbody id="dbBody"></tbody>
@@ -1509,6 +1581,50 @@
         requestArea.style.display = 'block';
         // Store current verification data for submission
         window.currentVerification = data;
+
+        // Show title suggestions when not auto-approved
+        const suggestionsArea = document.getElementById('suggestionsArea');
+        suggestionsArea.innerHTML = '';
+        if (!approved) {
+          fetchAndRenderSuggestions(data.title || document.getElementById('titleInput').value.trim());
+        }
+      }
+
+      async function fetchAndRenderSuggestions(title) {
+        const suggestionsArea = document.getElementById('suggestionsArea');
+        suggestionsArea.innerHTML = `
+          <div class="suggestions-box">
+            <h4><i data-lucide="lightbulb"></i> Suggested Alternative Titles</h4>
+            <div style="color:var(--text-3);font-size:13px;">Generating suggestions…</div>
+          </div>`;
+        lucide.createIcons();
+
+        try {
+          const res = await fetch(`${API}/suggest-titles?title=${encodeURIComponent(title)}`);
+          if (!res.ok) throw new Error('failed');
+          const { suggestions } = await res.json();
+
+          if (!suggestions || suggestions.length === 0) {
+            suggestionsArea.innerHTML = '';
+            return;
+          }
+
+          suggestionsArea.innerHTML = `
+            <div class="suggestions-box">
+              <h4><i data-lucide="lightbulb"></i> Try These Alternative Titles</h4>
+              <div class="suggestion-chips">
+                ${suggestions.map(s => `
+                  <span class="suggestion-chip" onclick="fillInput(${JSON.stringify(s)})">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                    ${s}
+                  </span>`).join('')}
+              </div>
+              <p style="font-size:11px;color:var(--text-3);margin:10px 0 0;">Click a suggestion to populate the input and verify it.</p>
+            </div>`;
+          lucide.createIcons();
+        } catch {
+          suggestionsArea.innerHTML = '';
+        }
       }
 
       // ── Request Approval ──
@@ -1577,45 +1693,179 @@
       }
 
       // ── Database ──
-      async function searchDB() {
-        document.getElementById('db-loader').classList.remove('hidden');
-        const p = new URLSearchParams({
-          q: document.getElementById('filter-title').value,
-          registration_number: document.getElementById('filter-reg').value,
-          owner: document.getElementById('filter-owner').value,
-          state: document.getElementById('filter-state').value,
-          district: document.getElementById('filter-district').value,
-          language: document.getElementById('filter-lang').value,
-          limit: document.getElementById('filter-limit').value,
-        });
+      let currentPage = 0;
+      const pageSize = 50;
+      let cachedData = [];
+      
+      async function searchDB(resetPage = true) {
+        if (resetPage) {
+          currentPage = 0;
+          cachedData = [];
+        }
+        
+        const loader = document.getElementById('db-loader');
+        const countEl = document.getElementById('results-count');
+        loader.classList.remove('hidden');
+        countEl.innerText = '';
+        countEl.style.color = '';
+
+        let p, controller;
         try {
-          const data = await (await fetch(`${API}/search?${p}`)).json();
-          renderTable(data);
+          p = new URLSearchParams({
+            q: document.getElementById('filter-title').value,
+            registration_number: document.getElementById('filter-reg').value,
+            owner: document.getElementById('filter-owner').value,
+            state: document.getElementById('filter-state').value,
+            district: document.getElementById('filter-district').value,
+            language: document.getElementById('filter-lang').value,
+            limit: pageSize,
+            offset: currentPage * pageSize
+          });
+          controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 15000);
+          const resp = await fetch(`${API}/search?${p}`, { signal: controller.signal });
+          clearTimeout(timer);
+          if (!resp.ok) throw new Error(`Server error ${resp.status}`);
+          const data = await resp.json();
+          
+          if (resetPage) {
+            cachedData = data;
+            renderTable(data, false);
+          } else {
+            cachedData = [...cachedData, ...data];
+            renderTable(data, true);
+          }
+
+          // Update count
+          if (data.length === pageSize) {
+            countEl.innerText = `Showing ${cachedData.length}+ results — scroll for more`;
+          } else {
+            countEl.innerText = `${cachedData.length} result${cachedData.length !== 1 ? 's' : ''} found`;
+          }
+        } catch (err) {
+          const msg = err.name === 'AbortError'
+            ? 'Request timed out — server may be starting up, try again.'
+            : `Failed to load: ${err.message}`;
+          countEl.innerText = msg;
+          countEl.style.color = 'var(--accent)';
+          document.getElementById('dbBody').innerHTML = '';
         } finally {
-          document.getElementById('db-loader').classList.add('hidden');
+          loader.classList.add('hidden');
         }
       }
+      
+      // Infinite scroll for database
+      let _scrollLoading = false;
 
-      function renderTable(data) {
-        document.getElementById('results-count').innerText =
-          `${data.length} result${data.length !== 1 ? 's' : ''}`;
-        document.getElementById('dbBody').innerHTML = data
+      function setupInfiniteScroll() {
+        const tableScroll = document.querySelector('.table-scroll');
+        if (!tableScroll) return;
+
+        tableScroll.addEventListener('scroll', function() {
+          // Only trigger when user has scrolled (scrollTop > 0) and is near the bottom
+          if (this.scrollTop === 0) return;
+          if (_scrollLoading) return;
+          const scrollHeight = this.scrollHeight;
+          const scrollTop = this.scrollTop;
+          const clientHeight = this.clientHeight;
+
+          if (scrollTop + clientHeight >= scrollHeight - 100) {
+            _scrollLoading = true;
+            currentPage++;
+            searchDB(false).finally(() => { _scrollLoading = false; });
+          }
+        });
+      }
+
+      function renderTable(data, appendMode = false) {
+        const dbBody = document.getElementById('dbBody');
+        const rows = data
           .map(
             (r, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td class="t-name">${r.title}</td>
-                <td>${r.registration_number || '—'}</td>
-                <td>${r.registration_date || '—'}</td>
-                <td>${r.language || '—'}</td>
-                <td>${r.periodicity || '—'}</td>
-                <td>${r.publisher || '—'}</td>
-                <td>${r.owner || '—'}</td>
-                <td>${r.pub_state || '—'}</td>
+            <tr data-id="${r.id}">
+                <td>${appendMode ? cachedData.length - data.length + i + 1 : i + 1}</td>
+                <td class="t-name editable" data-field="title" data-id="${r.id}">${r.title || ''}</td>
+                <td class="editable" data-field="registration_number" data-id="${r.id}">${r.registration_number || ''}</td>
+                <td class="editable" data-field="registration_date" data-id="${r.id}">${r.registration_date || ''}</td>
+                <td class="editable" data-field="language" data-id="${r.id}">${r.language || ''}</td>
+                <td class="editable" data-field="periodicity" data-id="${r.id}">${r.periodicity || ''}</td>
+                <td class="editable" data-field="publisher" data-id="${r.id}">${r.publisher || ''}</td>
+                <td class="editable" data-field="owner" data-id="${r.id}">${r.owner || ''}</td>
+                <td class="editable" data-field="pub_state" data-id="${r.id}">${r.pub_state || ''}</td>
+                <td class="editable" data-field="pub_district" data-id="${r.id}">${r.pub_district || ''}</td>
             </tr>`,
           )
           .join('');
+
+        if (appendMode) {
+          dbBody.insertAdjacentHTML('beforeend', rows);
+        } else {
+          dbBody.innerHTML = rows;
+        }
       }
+
+      // Single delegated dblclick handler — set up once, works for all rows incl. appended
+      (function setupCellEdit() {
+        const dbBody = document.getElementById('dbBody');
+        if (!dbBody || dbBody._editBound) return;
+        dbBody._editBound = true;
+
+        dbBody.addEventListener('dblclick', function(e) {
+          const cell = e.target.closest('td.editable');
+          if (!cell || cell.classList.contains('editing')) return;
+
+          const currentValue = cell.textContent.trim();
+          const field = cell.dataset.field;
+          const id = cell.dataset.id;
+
+          cell.classList.add('editing');
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = currentValue;
+          input.className = 'cell-editor';
+          input.style.cssText = 'width:100%;background:var(--surface-2);border:none;outline:none;color:var(--text-1);padding:5px 10px;font-size:inherit;font-family:inherit;box-sizing:border-box;';
+
+          cell.textContent = '';
+          cell.appendChild(input);
+          input.focus();
+          input.select();
+
+          const saveEdit = async () => {
+            const newValue = input.value.trim();
+            if (cell.contains(input)) cell.removeChild(input);
+            cell.classList.remove('editing');
+
+            if (newValue !== currentValue) {
+              try {
+                const resp = await fetch(`${API}/title/update`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id: parseInt(id), field, value: newValue })
+                });
+                if (resp.ok) {
+                  cell.textContent = newValue;
+                  cell.style.background = 'rgba(34,197,94,0.15)';
+                  setTimeout(() => { cell.style.background = ''; }, 1200);
+                } else {
+                  cell.textContent = currentValue;
+                  alert('Save failed — check server');
+                }
+              } catch (err) {
+                cell.textContent = currentValue;
+              }
+            } else {
+              cell.textContent = currentValue;
+            }
+          };
+
+          input.addEventListener('blur', saveEdit);
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+            else if (e.key === 'Escape') { input.value = currentValue; input.blur(); }
+          });
+        });
+      })();
 
       function resetFilters() {
         document
@@ -1737,6 +1987,7 @@
       window.onload = () => {
         loadStats();
         lucide.createIcons();
+        setupInfiniteScroll();
       };
     </script>
   </body>

@@ -5,7 +5,11 @@ DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'prgi_titles.db')
 
 TITLES_CACHE_LIST = []
 TITLES_CACHE_SET = set()
-PHONETIC_CACHE = {}  # title -> (soundex_frozenset, nysiis_frozenset), built at startup
+PHONETIC_CACHE = {}      # title -> (soundex_frozenset, nysiis_frozenset)
+SOUNDEX_INDEX  = {}      # soundex_code -> set of titles  (reverse index for fast lookup)
+NYSIIS_INDEX   = {}      # nysiis_code  -> set of titles
+WORD_INDEX     = {}      # word (uppercase) -> set of titles containing that word
+DISALLOWED_WORDS_CACHE = []  # in-memory list of disallowed words (uppercase)
 
 def get_connection():
     return sqlite3.connect(DB_PATH)
@@ -28,21 +32,46 @@ def load_titles_into_memory():
         print(f"Loaded {len(titles_raw):,} titles from prgi_titles.db")
         print(f"After deduplication: {len(TITLES_CACHE_SET):,} unique titles ready")
 
-        # Precompute phonetic codes for all titles (eliminates per-query recomputation)
+        # Precompute phonetic codes + build reverse index (O(1) candidate lookup)
         import jellyfish
         PHONETIC_CACHE.clear()
+        SOUNDEX_INDEX.clear()
+        NYSIIS_INDEX.clear()
         for t in TITLES_CACHE_LIST:
             words = t.split()  # already uppercase
-            PHONETIC_CACHE[t] = (
-                frozenset(jellyfish.soundex(w) for w in words if w),
-                frozenset(jellyfish.nysiis(w)  for w in words if w),
-            )
-        print(f"Phonetic cache ready for {len(PHONETIC_CACHE):,} titles")
+            sx = frozenset(jellyfish.soundex(w) for w in words if w)
+            ny = frozenset(jellyfish.nysiis(w)  for w in words if w)
+            PHONETIC_CACHE[t] = (sx, ny)
+            for code in sx:
+                SOUNDEX_INDEX.setdefault(code, set()).add(t)
+            for code in ny:
+                NYSIIS_INDEX.setdefault(code, set()).add(t)
+        print(f"Phonetic cache + reverse index ready for {len(PHONETIC_CACHE):,} titles")
+
+        # Build word → titles reverse index for fast combination detection
+        WORD_INDEX.clear()
+        for t in TITLES_CACHE_LIST:
+            for word in t.split():  # already uppercase
+                if len(word) >= 2:
+                    WORD_INDEX.setdefault(word, set()).add(t)
+        print(f"Word index ready: {len(WORD_INDEX):,} unique words")
     except Exception as e:
         print(f"Error loading titles: {e}")
 
+def _refresh_disallowed_cache():
+    """Reload disallowed words from DB into in-memory list (in-place update)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT word FROM disallowed_words')
+    new_words = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    DISALLOWED_WORDS_CACHE.clear()
+    DISALLOWED_WORDS_CACHE.extend(new_words)
+
+
 def init_db():
     conn = get_connection()
+    conn.execute("PRAGMA journal_mode=WAL")  # enable WAL once — allows concurrent reads during writes
     cursor = conn.cursor()
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS titles (
@@ -143,6 +172,16 @@ def init_db():
     )
     ''')
     
+    # Create indexes for faster search
+    try:
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titles_title ON titles(title)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titles_owner ON titles(owner)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titles_state ON titles(pub_state)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titles_language ON titles(language)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS idx_titles_reg ON titles(registration_number)')
+    except sqlite3.OperationalError:
+        pass  # Indexes may already exist
+    
     # Create rejected_titles table for tracking auto-rejected and admin-rejected submissions
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS rejected_titles (
@@ -179,6 +218,7 @@ def init_db():
     conn.commit()
     conn.close()
     load_titles_into_memory()
+    _refresh_disallowed_cache()
 
 def get_all_titles():
     return TITLES_CACHE_LIST if TITLES_CACHE_LIST else []
@@ -191,7 +231,7 @@ def search_db_full(params):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    query = "SELECT * FROM titles WHERE 1=1"
+    query = "SELECT id, title, registration_number, registration_date, language, periodicity, publisher, owner, pub_state, pub_district FROM titles WHERE 1=1"
     args = []
     
     mapping = {
@@ -209,8 +249,9 @@ def search_db_full(params):
             query += f" AND {col} LIKE ?"
             args.append(f"%{val}%")
             
-    limit = params.get("limit", 100)
-    query += f" LIMIT {limit}"
+    limit = int(params.get("limit", 50))
+    offset = int(params.get("offset", 0))
+    query += f" ORDER BY id LIMIT {limit} OFFSET {offset}"
     
     cursor.execute(query, args)
     rows = [dict(row) for row in cursor.fetchall()]
@@ -246,6 +287,7 @@ def add_disallowed_word(word):
     cursor.execute('INSERT OR IGNORE INTO disallowed_words (word) VALUES (?)', (word.upper(),))
     conn.commit()
     conn.close()
+    _refresh_disallowed_cache()
 
 def delete_disallowed_word(word):
     conn = get_connection()
@@ -253,8 +295,13 @@ def delete_disallowed_word(word):
     cursor.execute('DELETE FROM disallowed_words WHERE word = ?', (word.upper(),))
     conn.commit()
     conn.close()
+    _refresh_disallowed_cache()
 
 def get_disallowed_words():
+    """Return disallowed words from in-memory cache — no SQLite hit."""
+    if DISALLOWED_WORDS_CACHE:
+        return list(DISALLOWED_WORDS_CACHE)
+    # Fallback: DB query if cache not populated yet
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT word FROM disallowed_words')
@@ -515,10 +562,35 @@ def add_batch_result(batch_id, title, verification_data):
     cursor.execute('''
     INSERT INTO batch_results (batch_id, title, verdict, approval_probability, rejection_reasons, verification_data)
     VALUES (?, ?, ?, ?, ?, ?)
-    ''', (batch_id, title, verification_data.get('verdict'), 
-          verification_data.get('approval_probability'), 
+    ''', (batch_id, title, verification_data.get('verdict'),
+          verification_data.get('approval_probability'),
           json.dumps(verification_data.get('rejection_reasons', [])),
           json.dumps(verification_data)))
+    conn.commit()
+    conn.close()
+
+def add_batch_results_bulk(batch_id, results_list):
+    """Insert all batch results in ONE transaction — eliminates per-row commit overhead."""
+    import json
+    conn = get_connection()
+    cursor = conn.cursor()
+    rows = []
+    for title, vd in results_list:
+        if vd is None:
+            continue
+        rows.append((
+            batch_id,
+            title,
+            vd.get('verdict'),
+            vd.get('approval_probability'),
+            json.dumps(vd.get('rejection_reasons', [])),
+            json.dumps(vd),
+        ))
+    cursor.executemany('''
+        INSERT INTO batch_results
+               (batch_id, title, verdict, approval_probability, rejection_reasons, verification_data)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', rows)
     conn.commit()
     conn.close()
 
@@ -542,51 +614,80 @@ def get_batch_analytics(batch_id):
     import json
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT verification_data FROM batch_results WHERE batch_id = ?', (batch_id,))
+    cursor.execute('SELECT verdict, verification_data FROM batch_results WHERE batch_id = ?', (batch_id,))
     results = cursor.fetchall()
-    conn.close()
-    
+
     analytics = {
-        'rule_violations': {},
+        'rule_violations': {'semantic': 0, 'phonetic': 0, 'affix': 0, 'combination': 0},
         'prefix_usage': {},
         'state_rejections': {},
         'unique_vs_duplicate': {'unique': 0, 'duplicate': 0},
         'confidence_levels': [],
         'language_conflicts': {}
     }
-    
-    for row in results:
-        data = json.loads(row[0]) if row[0] else {}
-        
-        # Rule violations
-        if 'rejection_reasons' in data:
-            for reason in data['rejection_reasons']:
-                if 'semantic' in reason.lower():
-                    analytics['rule_violations']['semantic'] = analytics['rule_violations'].get('semantic', 0) + 1
-                elif 'phonetic' in reason.lower():
-                    analytics['rule_violations']['phonetic'] = analytics['rule_violations'].get('phonetic', 0) + 1
-                elif 'suffix' in reason.lower() or 'prefix' in reason.lower():
-                    analytics['rule_violations']['affix'] = analytics['rule_violations'].get('affix', 0) + 1
-                else:
-                    analytics['rule_violations']['combination'] = analytics['rule_violations'].get('combination', 0) + 1
-        
-        # Confidence levels
+
+    matched_titles_upper = []  # existing_title values from priority_matches (already uppercase)
+
+    for verdict, vdata in results:
+        data = json.loads(vdata) if vdata else {}
+
+        # Rule violations — count each rejection reason category
+        for reason in data.get('rejection_reasons', []):
+            r = reason.lower()
+            if 'semantic' in r or 'cross-language' in r or 'conceptual' in r:
+                analytics['rule_violations']['semantic'] += 1
+            elif 'phonetic' in r or 'similar' in r or 'typo' in r:
+                analytics['rule_violations']['phonetic'] += 1
+            elif 'prefix' in r or 'suffix' in r or 'restricted' in r:
+                analytics['rule_violations']['affix'] += 1
+            elif reason.strip():
+                analytics['rule_violations']['combination'] += 1
+
+        # Confidence / approval probability
         if 'approval_probability' in data:
             analytics['confidence_levels'].append(data['approval_probability'])
-        
-        # Title analysis
+
+        # Title prefix (first word of the submitted title)
         title = data.get('title', '')
-        words = title.split()
+        words = title.strip().split()
         if words:
             prefix = words[0].upper()
             analytics['prefix_usage'][prefix] = analytics['prefix_usage'].get(prefix, 0) + 1
-        
-        # Verdict analysis
+
+        # Verdict analysis — APPROVED = unique, else duplicate/conflict
         if data.get('verdict') == 'APPROVED':
             analytics['unique_vs_duplicate']['unique'] += 1
         else:
             analytics['unique_vs_duplicate']['duplicate'] += 1
-    
+
+        # Collect existing titles from priority_matches for state/language analysis
+        for pm in data.get('priority_matches', []):
+            for match in pm.get('matches', []):
+                et = match.get('existing_title', '')
+                # Skip theme pseudo-titles and empty values
+                if et and not et.startswith('Theme:') and not et.startswith('Multiple'):
+                    matched_titles_upper.append(et.upper())
+
+    # Look up pub_state and language for all matched existing titles
+    if matched_titles_upper:
+        unique_matched = list(set(matched_titles_upper))[:500]  # cap at 500 unique lookups
+        placeholders = ','.join(['?' for _ in unique_matched])
+        try:
+            cursor.execute(
+                f'SELECT pub_state, language FROM titles WHERE UPPER(title) IN ({placeholders})',
+                unique_matched
+            )
+            for pub_state, language in cursor.fetchall():
+                if pub_state and pub_state.strip():
+                    s = pub_state.strip()
+                    analytics['state_rejections'][s] = analytics['state_rejections'].get(s, 0) + 1
+                if language and language.strip():
+                    l = language.strip()
+                    analytics['language_conflicts'][l] = analytics['language_conflicts'].get(l, 0) + 1
+        except Exception:
+            pass  # analytics gracefully stays empty if lookup fails
+
+    conn.close()
     return analytics
 
 def approve_batch_titles(batch_id, title_ids, admin_name="Admin"):

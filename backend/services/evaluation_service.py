@@ -186,10 +186,14 @@ class TitleEvaluationService:
         
         # Calculate maxCosineSimilarity from phonetic, fuzzy, semantic scores
         phonetic_score = checks.get("phonetic", {}).get("score", 0) / 100.0
-        fuzzy_score = checks.get("fuzzy", {}).get("score", 0) / 100.0
+        fuzzy_score    = checks.get("fuzzy",    {}).get("score", 0) / 100.0
         semantic_score = checks.get("semantic_cl", {}).get("score", 0) / 100.0
-        
-        max_cosine_similarity = max(phonetic_score, fuzzy_score, semantic_score)
+
+        # Phonetic checker reports matches at >30% (single shared word sounds = noise).
+        # Only treat phonetic similarity as meaningful when it reaches 60%+.
+        # Fuzzy and semantic already enforce ≥60% internally, so they're used as-is.
+        eff_phonetic = phonetic_score if phonetic_score >= 0.60 else 0.0
+        max_cosine_similarity = max(eff_phonetic, fuzzy_score, semantic_score)
         
         # Calculate ruleComplianceScore (higher is better, so invert violation count)
         rules = checks.get("rules", {})
@@ -217,16 +221,26 @@ class TitleEvaluationService:
             rule_compliance_score * 0.30 +
             prefix_suffix_score * 0.15 +
             combination_score * 0.10
-        ) * 99.0  # Convert to percentage (max 99%)
-        
-        # Cap scores above 75% to 99%
-        if final_score > 75:
-            final_score = 99.0
-        
-        # Determine decision based on score thresholds
+        ) * 100.0  # Convert to percentage
+
+        # Hard override: exact match must always be 0% — the weighted formula
+        # still gives ~52% because rule/prefix/combination weights are non-zero.
+        has_exact_match = any(
+            pm.get("priority") == 1
+            for pm in verification_result.get("priority_matches", [])
+        )
+        if has_exact_match:
+            final_score = 0.0
+
+        # Read configurable threshold from DB (set via admin threshold slider)
+        from backend.database import get_admin_config
+        _ratio = get_admin_config('acceptance_ratio')
+        acceptance_threshold = int(_ratio) if _ratio else 60
+
+        # Determine decision based on configurable acceptance threshold
         if final_score < 30:
             decision = "AUTO_REJECT"
-        elif 30 <= final_score <= 60:
+        elif final_score <= acceptance_threshold:
             decision = "PENDING_ADMIN"
         else:
             decision = "AUTO_APPROVED"

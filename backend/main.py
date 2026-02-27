@@ -3,6 +3,7 @@ import io
 import json
 import uuid
 import time
+import asyncio
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form, Depends
@@ -19,7 +20,7 @@ from backend.database import (init_db, add_disallowed_word, delete_disallowed_wo
                               get_comprehensive_stats, search_db_full, get_disallowed_words,
                               submit_approval_request, get_pending_requests, get_all_requests,
                               approve_request, reject_request, get_temp2_titles,
-                              create_batch_upload, add_batch_result, update_batch_status,
+                              create_batch_upload, add_batch_result, add_batch_results_bulk, update_batch_status,
                               get_batch_results, get_batch_analytics, approve_batch_titles,
                               verify_admin_password, get_admin_config, set_admin_config, get_connection,
                               check_rejected_history, insert_rejected_title, get_rejected_titles,
@@ -33,7 +34,7 @@ RECENT_SUBMISSIONS = []
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    await asyncio.to_thread(init_db)   # run in thread — keeps event loop free during startup
     yield
 
 app = FastAPI(
@@ -45,13 +46,13 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,   # must be False when allow_origins=["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @app.post("/api/verify-title", response_model=TitleResponse)
-async def api_verify_title(request: TitleRequest):
+def api_verify_title(request: TitleRequest):
     if not request.title or not request.title.strip():
         raise HTTPException(status_code=400, detail="Title cannot be empty")
     
@@ -156,13 +157,128 @@ async def api_verify_title(request: TitleRequest):
         return result
 
 @app.get("/api/search")
-async def api_search(request: Request):
+def api_search(request: Request):
     params = dict(request.query_params)
     return search_db_full(params)
 
+@app.post("/api/title/update")
+async def api_update_title(request: Request):
+    data = await request.json()
+    title_id = data.get("id")
+    field = data.get("field")
+    value = data.get("value")
+    
+    if not title_id or not field:
+        raise HTTPException(status_code=400, detail="ID and field are required")
+    
+    # Validate field to prevent SQL injection
+    allowed_fields = ["title", "registration_number", "registration_date", "language", 
+                     "periodicity", "publisher", "owner", "pub_state", "pub_district"]
+    if field not in allowed_fields:
+        raise HTTPException(status_code=400, detail="Invalid field")
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(f"UPDATE titles SET {field} = ? WHERE id = ?", (value, title_id))
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    
+    if affected == 0:
+        raise HTTPException(status_code=404, detail="Title not found")
+    
+    return {"message": "Title updated successfully"}
+
 @app.get("/api/stats")
-async def api_stats():
+def api_stats():
     return get_comprehensive_stats()
+
+@app.get("/api/suggest-titles")
+def api_suggest_titles(title: str):
+    """Return up to 5 alternative title suggestions for a rejected/borderline title."""
+    from backend.database import get_titles_set, get_disallowed_words as _get_dw
+    from backend.services.rules_checker import load_disallowed_words
+
+    title_upper = title.strip().upper()
+    words = title_upper.split()
+    titles_set = get_titles_set()
+    disallowed = set(load_disallowed_words())
+
+    # Synonym bank — maps a word to plausible unique alternatives
+    SYNONYMS = {
+        "TIMES":    ["CHRONICLE", "GAZETTE", "TRIBUNE", "HERALD", "DISPATCH", "BULLETIN"],
+        "NEWS":     ["BULLETIN", "REPORT", "JOURNAL", "DIGEST", "ALERT", "INFORM"],
+        "DAILY":    ["DARPAN", "PATRIKA", "VARTA", "SANDESH", "BULLETIN"],
+        "WEEKLY":   ["DARPAN", "REVIEW", "JOURNAL", "DIGEST"],
+        "INDIA":    ["BHARAT", "RASHTRIYA", "NATIONAL", "HINDUSTANI"],
+        "PRESS":    ["MEDIA", "JOURNAL", "REPORT", "CONNECT"],
+        "SAMACHAR": ["DARPAN", "PATRIKA", "VARTA", "SANDES"],
+        "POST":     ["HERALD", "TRIBUNE", "VOICE", "SENTINEL"],
+        "STAR":     ["SUN", "DAWN", "WAVE", "PEAK", "SPARK"],
+        "VOICE":    ["ECHO", "SIGNAL", "VANI", "AWAZ", "CALL"],
+        "SUN":      ["DAWN", "RISE", "LIGHT", "BEAM", "RAY"],
+        "MORNING":  ["PRABHAT", "UDAYA", "SUNRISE", "DAWN", "PRATAH"],
+        "NATIONAL": ["RASHTRIYA", "DESH", "BHARAT", "LOKTANTRA"],
+        "THE":      [],  # Just remove it
+        "JAN":      ["LOK", "JANATA", "JANTA", "SAMAJ"],
+    }
+
+    # Differentiating suffixes/prefixes to try appending
+    DECORATORS = ["AWAZ", "DARPAN", "SANDESH", "PRATAP", "UDAYA", "PRABHAT",
+                  "SANDES", "VANI", "PATRIKA", "VARTA", "SENA", "PRABHAV"]
+
+    candidates = []
+
+    def is_valid(c: str) -> bool:
+        cu = c.upper()
+        if cu in titles_set:
+            return False
+        if not cu.strip():
+            return False
+        cwords = cu.split()
+        if any(w in disallowed for w in cwords):
+            return False
+        return True
+
+    def titlecase(s: str) -> str:
+        return ' '.join(w.capitalize() for w in s.lower().split())
+
+    tried = set()
+
+    def add(c: str):
+        cu = c.strip().upper()
+        if cu not in tried and is_valid(cu):
+            tried.add(cu)
+            candidates.append(titlecase(cu))
+
+    # Strategy 1: Replace each word with each synonym
+    for i, w in enumerate(words):
+        if w in SYNONYMS:
+            for syn in SYNONYMS[w]:
+                new = words[:i] + [syn] + words[i+1:]
+                add(' '.join(new))
+                # Also drop the original word entirely (e.g., remove "THE")
+                if not syn:
+                    remaining = words[:i] + words[i+1:]
+                    if remaining:
+                        add(' '.join(remaining))
+
+    # Strategy 2: Append or prepend a decorator word
+    core = [w for w in words if w not in {"THE", "A", "AN"}] or words
+    for dec in DECORATORS:
+        add(' '.join(core + [dec]))
+        add(' '.join([dec] + core))
+
+    # Strategy 3: Drop restricted first/last word and try
+    if len(words) >= 2:
+        restricted_affixes = {"THE", "INDIA", "SAMACHAR", "NEWS", "DAILY",
+                              "WEEKLY", "MONTHLY", "TIMES", "PRESS", "JAN"}
+        if words[0] in restricted_affixes:
+            add(' '.join(words[1:]))
+        if words[-1] in restricted_affixes:
+            add(' '.join(words[:-1]))
+
+    return {"suggestions": candidates[:5]}
 
 @app.get("/api/recent")
 async def api_recent():
@@ -336,6 +452,25 @@ async def api_search_rejected(title: str):
 
 # ── BATCH PROCESSING ENDPOINTS ──
 
+def _run_batch_verify(batch_id: int, clean_titles: list):
+    """Sync helper: run all verify_title calls in a thread pool, then bulk-insert.
+    Called via asyncio.to_thread() so it never blocks the FastAPI event loop."""
+    errors = 0
+    results_list = []
+    with ThreadPoolExecutor(max_workers=min(16, len(clean_titles))) as pool:
+        futures = {pool.submit(verify_title, t): t for t in clean_titles}
+        for future in as_completed(futures):
+            t = futures[future]
+            try:
+                results_list.append((t, future.result()))
+            except Exception as e:
+                print(f"❌ Error verifying '{t}': {e}")
+                errors += 1
+    add_batch_results_bulk(batch_id, results_list)
+    update_batch_status(batch_id, 'completed')
+    return len(results_list), errors
+
+
 @app.post("/api/batch/upload")
 async def api_batch_upload(file: UploadFile = File(...), score_threshold: float = Form(75.0)):
     print(f"\n{'='*60}")
@@ -412,66 +547,62 @@ async def api_batch_upload(file: UploadFile = File(...), score_threshold: float 
         
         # Create batch upload record
         batch_id = create_batch_upload(file.filename, len(titles))
-        
-        # Process titles with score filtering (only add if score > threshold)
+
+        # ── Offload all CPU/IO work to a thread — keeps event loop free ──
         start_time = time.time()
-        processed = 0
-        accepted = 0
-        rejected = 0
-        errors = 0
-
-        def _process_one(title_str):
-            try:
-                # Use evaluation service to get score
-                evaluation_result = TitleEvaluationService.evaluate_title(title_str)
-                score = evaluation_result.get('score', 0)
-                
-                # Only add to batch_results and temp2 if score > threshold
-                if score > score_threshold:
-                    result = evaluation_result['verification_result']
-                    add_batch_result(batch_id, title_str, result)
-                    
-                    # Automatically add to temp2 database
-                    metrics = evaluation_result.get('metrics', {})
-                    temp2_id = insert_temp2_with_evaluation(
-                        title=title_str,
-                        approved_by='SYSTEM_BATCH',
-                        evaluation_score=score,
-                        evaluation_metrics=metrics
-                    )
-                    print(f"✅ Added to Temp2: '{title_str}' (score: {score:.1f}%, temp2_id: {temp2_id})")
-                    
-                    return ('accepted', title_str)
-                else:
-                    return ('rejected', title_str)
-            except Exception as e:
-                print(f"❌ Error processing '{title_str}': {str(e)}")
-                raise
-        
-
         clean_titles = [t.strip() for t in titles if t and t.strip()]
-        with ThreadPoolExecutor(max_workers=min(12, len(clean_titles))) as pool:
-            futures = {pool.submit(_process_one, t): t for t in clean_titles}
-            for future in as_completed(futures):
-                try:
-                    status, title = future.result()
-                    processed += 1
-                    if status == 'accepted':
-                        accepted += 1
-                    else:
-                        rejected += 1
-                    
-                    if processed % 100 == 0:
-                        elapsed = time.time() - start_time
-                        rate = processed / elapsed if elapsed > 0 else 0
-                        remaining = (len(clean_titles) - processed) / rate if rate > 0 else 0
-                        print(f"⏳ {processed:,}/{len(clean_titles):,} titles | ✅ {accepted} accepted | ❌ {rejected} rejected | {rate:.1f} titles/sec | ETA: {int(remaining)}s")
-                except Exception as e:
-                    print(f"❌ Error processing title - {e}")
-                    errors += 1
 
-        update_batch_status(batch_id, 'completed')
-        
+        def _run_scored_batch(batch_id, clean_titles, score_threshold):
+            processed = 0
+            accepted = 0
+            rejected = 0
+            errors = 0
+
+            def _process_one(title_str):
+                try:
+                    evaluation_result = TitleEvaluationService.evaluate_title(title_str)
+                    score = evaluation_result.get('score', 0)
+                    if score > score_threshold:
+                        result = evaluation_result['verification_result']
+                        add_batch_result(batch_id, title_str, result)
+                        metrics = evaluation_result.get('metrics', {})
+                        insert_temp2_with_evaluation(
+                            title=title_str,
+                            approved_by='SYSTEM_BATCH',
+                            evaluation_score=score,
+                            evaluation_metrics=metrics
+                        )
+                        print(f"✅ Added to Temp2: '{title_str}' (score: {score:.1f}%)")
+                        return ('accepted', title_str)
+                    else:
+                        return ('rejected', title_str)
+                except Exception as e:
+                    print(f"❌ Error processing '{title_str}': {str(e)}")
+                    raise
+
+            with ThreadPoolExecutor(max_workers=min(12, len(clean_titles))) as pool:
+                futures = {pool.submit(_process_one, t): t for t in clean_titles}
+                for future in as_completed(futures):
+                    try:
+                        status, title = future.result()
+                        processed += 1
+                        if status == 'accepted':
+                            accepted += 1
+                        else:
+                            rejected += 1
+                        if processed % 100 == 0:
+                            print(f"⏳ {processed:,}/{len(clean_titles):,} | ✅ {accepted} accepted | ❌ {rejected} rejected")
+                    except Exception as e:
+                        print(f"❌ Error: {e}")
+                        errors += 1
+
+            update_batch_status(batch_id, 'completed')
+            return processed, accepted, rejected, errors
+
+        processed, accepted, rejected, errors = await asyncio.to_thread(
+            _run_scored_batch, batch_id, clean_titles, score_threshold
+        )
+
         total_time = time.time() - start_time
         print(f"\n{'='*60}")
         print(f"✅ BATCH COMPLETE!")
@@ -519,32 +650,9 @@ async def api_batch_upload_text(request: dict):
         # Create batch upload record
         batch_id = create_batch_upload("text_input.txt", total_titles)
         
-        # Process titles in parallel — verify_title() is independent per title
+        # ── Offload all CPU/IO work to a thread — keeps event loop free ──
         start_time = time.time()
-        processed = 0
-        errors = 0
-
-        def _process_text_title(title_str):
-            result = verify_title(title_str)
-            add_batch_result(batch_id, title_str, result)
-            return title_str
-
-        with ThreadPoolExecutor(max_workers=min(12, total_titles)) as pool:
-            futures = {pool.submit(_process_text_title, t): t for t in titles}
-            for future in as_completed(futures):
-                try:
-                    future.result()
-                    processed += 1
-                    if processed % 100 == 0:
-                        elapsed = time.time() - start_time
-                        rate = processed / elapsed if elapsed > 0 else 0
-                        remaining = (total_titles - processed) / rate if rate > 0 else 0
-                        print(f"⏳ {processed:,}/{total_titles:,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
-                except Exception as e:
-                    print(f"❌ Error processing title - {e}")
-                    errors += 1
-
-        update_batch_status(batch_id, 'completed')
+        processed, errors = await asyncio.to_thread(_run_batch_verify, batch_id, titles)
         
         total_time = time.time() - start_time
         print(f"\n{'='*60}")

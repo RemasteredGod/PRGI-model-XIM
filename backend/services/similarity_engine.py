@@ -4,7 +4,7 @@ from backend.services.phonetic_checker import check_phonetic
 from backend.services.fuzzy_checker import check_fuzzy
 from backend.services.rules_checker import check_rules_detailed
 from backend.services.semantic_checker import check_cross_language_similarity, check_conceptual_theme
-from backend.database import get_all_titles
+from backend.database import get_all_titles, get_titles_set
 
 def load_existing_titles():
     titles = get_all_titles()
@@ -23,8 +23,8 @@ def verify_title(title: str) -> dict:
     # 2. Categorize into 5 Priorities
     priority_matches = []
     
-    # PRIORITY 1 — EXACT MATCH
-    if title_upper in existing_titles:
+    # PRIORITY 1 — EXACT MATCH (O(1) set lookup)
+    if title_upper in get_titles_set():
         priority_matches.append({
             "priority": 1,
             "label": "Exact Match: Title already exists verbatim",
@@ -85,18 +85,24 @@ def verify_title(title: str) -> dict:
         })
 
     # 3. Probability Calculation
+    # Phonetic checker reports at >30% (single shared word sounds — noise at low scores).
+    # Only count phonetic similarity ≥ 60% as meaningful; below that it doesn't reduce
+    # the approval probability so genuine unique titles can reach 100%.
     scores = [0.0]
-    if phonetic_results: scores.append(max(r['match_percentage'] for r in phonetic_results))
+    if phonetic_results:
+        max_ph = max(r['match_percentage'] for r in phonetic_results)
+        if max_ph >= 60:
+            scores.append(max_ph)
     if fuzzy_results: scores.append(max(r['match_percentage'] for r in fuzzy_results))
     if semantic_cl_results: scores.append(max(r['match_percentage'] for r in semantic_cl_results))
-    
+
     highest_similarity = max(scores)
     
     # 4. Rules and Rejection Logic
     hard_violations = rule_results["violations"]
     if theme_match:
         hard_violations.append(f"Conceptual theme violation: Found '{theme_match['trigger']}' belonging to the '{theme_match['theme']}' cluster.")
-    if title_upper in existing_titles:
+    if title_upper in get_titles_set():
         hard_violations.append(f"Title '{title_upper}' already exists in the registry.")
 
     rejection_reasons = list(hard_violations)
