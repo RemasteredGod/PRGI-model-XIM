@@ -48,7 +48,7 @@
       body {
         background: var(--bg);
         color: var(--text-1);
-        font-family: 'Inter', system-ui, sans-serif;
+        font-family: "Inter", system-ui, sans-serif;
         font-size: 14px;
         line-height: 1.6;
         overflow-x: hidden;
@@ -544,7 +544,7 @@
               color: var(--text);
               border: 2px dashed var(--border);
               border-radius: 8px;
-              font-family: 'Courier New', monospace;
+              font-family: &quot;Courier New&quot;, monospace;
               font-size: 13px;
               resize: vertical;
             "
@@ -570,7 +570,8 @@
             step="1"
           />
           <div class="threshold-hint">
-            Only titles scoring above this threshold will be added to temp database
+            Only titles scoring above this threshold will be added to temp
+            database
           </div>
         </div>
 
@@ -794,35 +795,35 @@
     </div>
 
     <script>
-      const API = 'http://127.0.0.1:8000/api';
+      const API = "http://127.0.0.1:8000/api";
       let currentBatchId = null;
       let selectedFile = null;
-      let inputMode = 'file'; // 'file' or 'text'
+      let inputMode = "file"; // 'file' or 'text'
 
       // Define switchMode function early so onclick can access it
       window.switchMode = function (mode) {
         inputMode = mode;
-        const fileMode = document.getElementById('fileMode');
-        const textMode = document.getElementById('textMode');
-        const fileModeBtn = document.getElementById('fileModeBtn');
-        const textModeBtn = document.getElementById('textModeBtn');
-        const uploadBtn = document.getElementById('uploadBtn');
+        const fileMode = document.getElementById("fileMode");
+        const textMode = document.getElementById("textMode");
+        const fileModeBtn = document.getElementById("fileModeBtn");
+        const textModeBtn = document.getElementById("textModeBtn");
+        const uploadBtn = document.getElementById("uploadBtn");
 
-        if (mode === 'file') {
-          fileMode.style.display = 'block';
-          textMode.style.display = 'none';
-          fileModeBtn.classList.add('active');
-          textModeBtn.classList.remove('active');
+        if (mode === "file") {
+          fileMode.style.display = "block";
+          textMode.style.display = "none";
+          fileModeBtn.classList.add("active");
+          textModeBtn.classList.remove("active");
           uploadBtn.disabled = !selectedFile;
         } else {
-          fileMode.style.display = 'none';
-          textMode.style.display = 'block';
-          fileModeBtn.classList.remove('active');
-          textModeBtn.classList.add('active');
-          const titlesText = document.getElementById('titlesText');
+          fileMode.style.display = "none";
+          textMode.style.display = "block";
+          fileModeBtn.classList.remove("active");
+          textModeBtn.classList.add("active");
+          const titlesText = document.getElementById("titlesText");
           if (titlesText) {
             const titles = titlesText.value
-              .split('\n')
+              .split("\n")
               .filter((line) => line.trim()).length;
             uploadBtn.disabled = titles === 0;
           }
@@ -832,14 +833,14 @@
       lucide.createIcons();
 
       // Get DOM elements first
-      const uploadArea = document.getElementById('uploadArea');
-      const fileInput = document.getElementById('fileInput');
-      const uploadBtn = document.getElementById('uploadBtn');
-      const titlesText = document.getElementById('titlesText');
-      const titleCount = document.getElementById('titleCount');
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("fileInput");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const titlesText = document.getElementById("titlesText");
+      const titleCount = document.getElementById("titleCount");
 
       // Debug logging
-      console.log('Elements loaded:', {
+      console.log("Elements loaded:", {
         uploadArea: !!uploadArea,
         fileInput: !!fileInput,
         uploadBtn: !!uploadBtn,
@@ -850,44 +851,44 @@
       // Update title count for text mode
       function updateTitleCount() {
         if (!titlesText) {
-          console.error('titlesText element not found!');
+          console.error("titlesText element not found!");
           return;
         }
         const titles = titlesText.value
-          .split('\n')
+          .split("\n")
           .filter((line) => line.trim()).length;
         titleCount.textContent = `${titles} titles`;
-        if (inputMode === 'text') {
+        if (inputMode === "text") {
           uploadBtn.disabled = titles === 0;
         }
       }
 
       if (titlesText) {
-        titlesText.addEventListener('input', updateTitleCount);
+        titlesText.addEventListener("input", updateTitleCount);
       } else {
-        console.error('Cannot attach input listener - titlesText not found');
+        console.error("Cannot attach input listener - titlesText not found");
       }
 
       // Upload area interactions
       if (uploadArea) {
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener("click", () => fileInput.click());
       }
 
-      uploadArea.addEventListener('dragover', (e) => {
+      uploadArea.addEventListener("dragover", (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = 'var(--accent)';
-        uploadArea.style.background = 'var(--accent-dim)';
+        uploadArea.style.borderColor = "var(--accent)";
+        uploadArea.style.background = "var(--accent-dim)";
       });
 
-      uploadArea.addEventListener('dragleave', () => {
-        uploadArea.style.borderColor = '';
-        uploadArea.style.background = '';
+      uploadArea.addEventListener("dragleave", () => {
+        uploadArea.style.borderColor = "";
+        uploadArea.style.background = "";
       });
 
-      uploadArea.addEventListener('drop', (e) => {
+      uploadArea.addEventListener("drop", (e) => {
         e.preventDefault();
-        uploadArea.style.borderColor = '';
-        uploadArea.style.background = '';
+        uploadArea.style.borderColor = "";
+        uploadArea.style.background = "";
 
         const files = e.dataTransfer.files;
         if (files.length > 0) {
@@ -896,58 +897,58 @@
         }
       });
 
-      fileInput.addEventListener('change', handleFileSelect);
+      fileInput.addEventListener("change", handleFileSelect);
 
       function handleFileSelect() {
         if (fileInput.files.length > 0) {
           selectedFile = fileInput.files[0];
           uploadBtn.disabled = false;
-          uploadArea.querySelector('.upload-text').textContent =
+          uploadArea.querySelector(".upload-text").textContent =
             selectedFile.name;
-          uploadArea.querySelector('.upload-hint').textContent =
+          uploadArea.querySelector(".upload-hint").textContent =
             `${(selectedFile.size / 1024).toFixed(1)} KB`;
         }
       }
 
-      uploadBtn.addEventListener('click', uploadFile);
+      uploadBtn.addEventListener("click", uploadFile);
 
       // Score threshold slider
-      const scoreThreshold = document.getElementById('scoreThreshold');
-      const thresholdValue = document.getElementById('thresholdValue');
+      const scoreThreshold = document.getElementById("scoreThreshold");
+      const thresholdValue = document.getElementById("thresholdValue");
       if (scoreThreshold && thresholdValue) {
-        scoreThreshold.addEventListener('input', (e) => {
-          thresholdValue.textContent = e.target.value + '%';
+        scoreThreshold.addEventListener("input", (e) => {
+          thresholdValue.textContent = e.target.value + "%";
         });
       }
 
       async function uploadFile() {
-        const uploadStatus = document.getElementById('uploadStatus');
-        const progressFill = document.getElementById('progressFill');
-        const statusText = document.getElementById('statusText');
+        const uploadStatus = document.getElementById("uploadStatus");
+        const progressFill = document.getElementById("progressFill");
+        const statusText = document.getElementById("statusText");
         const thresholdVal = scoreThreshold ? scoreThreshold.value : 75;
 
-        uploadStatus.classList.add('active');
+        uploadStatus.classList.add("active");
         uploadBtn.disabled = true;
-        progressFill.style.width = '10%';
-        progressFill.classList.add('animating');
-        statusText.textContent = 'Processing...';
+        progressFill.style.width = "10%";
+        progressFill.classList.add("animating");
+        statusText.textContent = "Processing...";
 
         try {
           let res, data;
 
-          if (inputMode === 'text') {
+          if (inputMode === "text") {
             // Process text input
             const titles = titlesText.value
-              .split('\n')
+              .split("\n")
               .map((line) => line.trim())
               .filter((line) => line.length > 0);
 
-            progressFill.style.width = '30%';
+            progressFill.style.width = "30%";
             statusText.textContent = `Processing ${titles.length} titles...`;
 
             res = await fetch(`${API}/batch/upload-text`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ titles: titles }),
             });
 
@@ -957,30 +958,34 @@
             if (!selectedFile) return;
 
             const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('score_threshold', thresholdVal);
+            formData.append("file", selectedFile);
+            formData.append("score_threshold", thresholdVal);
 
-            progressFill.style.width = '30%';
+            progressFill.style.width = "30%";
             statusText.textContent = `Processing file (threshold: ${thresholdVal}%)...`;
 
             res = await fetch(`${API}/batch/upload`, {
-              method: 'POST',
+              method: "POST",
               body: formData,
             });
 
             data = await res.json();
           }
 
-          progressFill.classList.remove('animating');
-          progressFill.style.width = '95%';
+          progressFill.classList.remove("animating");
+          progressFill.style.width = "95%";
 
           if (res.ok) {
             currentBatchId = data.batch_id;
-            progressFill.style.width = '100%';
+            progressFill.style.width = "100%";
             const processedMsg = data.processed || data.total_titles;
-            const acceptedMsg = data.accepted ? ` | ✅ ${data.accepted} → Temp2 DB` : '';
-            const rejectedMsg = data.rejected ? ` | ❌ ${data.rejected} rejected` : '';
-            const errorsMsg = data.errors ? ` (${data.errors} errors)` : '';
+            const acceptedMsg = data.accepted
+              ? ` | ✅ ${data.accepted} → Temp2 DB`
+              : "";
+            const rejectedMsg = data.rejected
+              ? ` | ❌ ${data.rejected} rejected`
+              : "";
+            const errorsMsg = data.errors ? ` (${data.errors} errors)` : "";
             statusText.textContent = `✓ Complete! ${processedMsg}/${data.total_titles}${acceptedMsg}${rejectedMsg}${errorsMsg}`;
 
             // Show alert with accepted count
@@ -988,28 +993,32 @@
             const rejectedCount = data.rejected || 0;
             const totalProcessed = data.processed || data.total_titles || 0;
             const thresholdDisplay = data.score_threshold || thresholdVal;
-            
+
             if (acceptedCount > 0) {
-              alert(`✅ Success!\n\n${acceptedCount} title(s) automatically added to Temp2 Database\n\nTotal Processed: ${totalProcessed}\nAccepted: ${acceptedCount}\nRejected: ${rejectedCount}\n\nThreshold: ${thresholdDisplay}%`);
+              alert(
+                `✅ Success!\n\n${acceptedCount} title(s) automatically added to Temp2 Database\n\nTotal Processed: ${totalProcessed}\nAccepted: ${acceptedCount}\nRejected: ${rejectedCount}\n\nThreshold: ${thresholdDisplay}%`,
+              );
             } else {
-              alert(`⚠️ Batch Complete\n\nNo titles met the threshold of ${thresholdDisplay}%\n\nTotal Processed: ${totalProcessed}\nRejected: ${rejectedCount}\n\nTip: Lower the threshold to accept more titles.`);
+              alert(
+                `⚠️ Batch Complete\n\nNo titles met the threshold of ${thresholdDisplay}%\n\nTotal Processed: ${totalProcessed}\nRejected: ${rejectedCount}\n\nTip: Lower the threshold to accept more titles.`,
+              );
             }
-            
+
             setTimeout(() => {
-              uploadStatus.classList.remove('active');
+              uploadStatus.classList.remove("active");
               loadAnalytics(currentBatchId);
             }, 500);
           } else {
-            throw new Error(data.detail || 'Upload failed');
+            throw new Error(data.detail || "Upload failed");
           }
         } catch (err) {
-          progressFill.classList.remove('animating');
-          progressFill.style.width = '0%';
-          statusText.textContent = '✗ Error: ' + err.message;
-          alert('Error: ' + err.message);
+          progressFill.classList.remove("animating");
+          progressFill.style.width = "0%";
+          statusText.textContent = "✗ Error: " + err.message;
+          alert("Error: " + err.message);
           uploadBtn.disabled = false;
           setTimeout(() => {
-            uploadStatus.classList.remove('active');
+            uploadStatus.classList.remove("active");
           }, 3000);
         }
       }
@@ -1019,8 +1028,8 @@
           const res = await fetch(`${API}/batch/${batchId}/analytics`);
           const analytics = await res.json();
 
-          document.getElementById('emptyState').style.display = 'none';
-          document.getElementById('analyticsContent').style.display = 'block';
+          document.getElementById("emptyState").style.display = "none";
+          document.getElementById("analyticsContent").style.display = "block";
 
           renderViolationChart(analytics.rule_violations);
           renderPrefixLeaderboard(analytics.prefix_usage);
@@ -1029,20 +1038,20 @@
           renderConfidenceChart(analytics.confidence_levels);
           renderLanguageChart(analytics.language_conflicts);
         } catch (err) {
-          console.error('Error loading analytics:', err);
-          alert('Error loading analytics data');
+          console.error("Error loading analytics:", err);
+          alert("Error loading analytics data");
         }
       }
 
       function renderViolationChart(violations) {
-        const ctx = document.getElementById('violationChart').getContext('2d');
+        const ctx = document.getElementById("violationChart").getContext("2d");
         new Chart(ctx, {
-          type: 'bar',
+          type: "bar",
           data: {
-            labels: ['Semantic', 'Phonetic', 'Affix', 'Combination'],
+            labels: ["Semantic", "Phonetic", "Affix", "Combination"],
             datasets: [
               {
-                label: 'Violations',
+                label: "Violations",
                 data: [
                   violations.semantic || 0,
                   violations.phonetic || 0,
@@ -1050,16 +1059,16 @@
                   violations.combination || 0,
                 ],
                 backgroundColor: [
-                  'rgba(185, 28, 28, 0.8)',
-                  'rgba(249, 115, 22, 0.8)',
-                  'rgba(234, 179, 8, 0.8)',
-                  'rgba(147, 51, 234, 0.8)',
+                  "rgba(185, 28, 28, 0.8)",
+                  "rgba(249, 115, 22, 0.8)",
+                  "rgba(234, 179, 8, 0.8)",
+                  "rgba(147, 51, 234, 0.8)",
                 ],
                 borderColor: [
-                  'rgb(185, 28, 28)',
-                  'rgb(249, 115, 22)',
-                  'rgb(234, 179, 8)',
-                  'rgb(147, 51, 234)',
+                  "rgb(185, 28, 28)",
+                  "rgb(249, 115, 22)",
+                  "rgb(234, 179, 8)",
+                  "rgb(147, 51, 234)",
                 ],
                 borderWidth: 1,
               },
@@ -1072,12 +1081,12 @@
             scales: {
               y: {
                 beginAtZero: true,
-                ticks: { color: '#94a3b8' },
-                grid: { color: '#1c1c2e' },
+                ticks: { color: "#94a3b8" },
+                grid: { color: "#1c1c2e" },
               },
               x: {
-                ticks: { color: '#94a3b8' },
-                grid: { color: '#1c1c2e' },
+                ticks: { color: "#94a3b8" },
+                grid: { color: "#1c1c2e" },
               },
             },
           },
@@ -1085,7 +1094,7 @@
       }
 
       function renderPrefixLeaderboard(prefixes) {
-        const leaderboard = document.getElementById('prefixLeaderboard');
+        const leaderboard = document.getElementById("prefixLeaderboard");
         const sorted = Object.entries(prefixes)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 8);
@@ -1100,31 +1109,31 @@
               </div>
           `,
           )
-          .join('');
+          .join("");
       }
 
       function renderStateChart(states) {
         // Mock data for demonstration
-        const ctx = document.getElementById('stateChart').getContext('2d');
+        const ctx = document.getElementById("stateChart").getContext("2d");
         new Chart(ctx, {
-          type: 'pie',
+          type: "pie",
           data: {
             labels: [
-              'Maharashtra',
-              'Delhi',
-              'Karnataka',
-              'Tamil Nadu',
-              'Others',
+              "Maharashtra",
+              "Delhi",
+              "Karnataka",
+              "Tamil Nadu",
+              "Others",
             ],
             datasets: [
               {
                 data: [30, 25, 20, 15, 10],
                 backgroundColor: [
-                  'rgba(185, 28, 28, 0.8)',
-                  'rgba(249, 115, 22, 0.8)',
-                  'rgba(234, 179, 8, 0.8)',
-                  'rgba(59, 130, 246, 0.8)',
-                  'rgba(147, 51, 234, 0.8)',
+                  "rgba(185, 28, 28, 0.8)",
+                  "rgba(249, 115, 22, 0.8)",
+                  "rgba(234, 179, 8, 0.8)",
+                  "rgba(59, 130, 246, 0.8)",
+                  "rgba(147, 51, 234, 0.8)",
                 ],
               },
             ],
@@ -1134,8 +1143,8 @@
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'right',
-                labels: { color: '#94a3b8', padding: 12 },
+                position: "right",
+                labels: { color: "#94a3b8", padding: 12 },
               },
             },
           },
@@ -1143,17 +1152,17 @@
       }
 
       function renderDuplicateChart(data) {
-        const ctx = document.getElementById('duplicateChart').getContext('2d');
+        const ctx = document.getElementById("duplicateChart").getContext("2d");
         new Chart(ctx, {
-          type: 'doughnut',
+          type: "doughnut",
           data: {
-            labels: ['Unique', 'Duplicate'],
+            labels: ["Unique", "Duplicate"],
             datasets: [
               {
                 data: [data.unique, data.duplicate],
                 backgroundColor: [
-                  'rgba(22, 163, 74, 0.8)',
-                  'rgba(185, 28, 28, 0.8)',
+                  "rgba(22, 163, 74, 0.8)",
+                  "rgba(185, 28, 28, 0.8)",
                 ],
               },
             ],
@@ -1163,8 +1172,8 @@
             maintainAspectRatio: false,
             plugins: {
               legend: {
-                position: 'bottom',
-                labels: { color: '#94a3b8', padding: 16 },
+                position: "bottom",
+                labels: { color: "#94a3b8", padding: 16 },
               },
             },
           },
@@ -1179,21 +1188,21 @@
           bins[Math.min(bin, 4)]++;
         });
 
-        const ctx = document.getElementById('confidenceChart').getContext('2d');
+        const ctx = document.getElementById("confidenceChart").getContext("2d");
         new Chart(ctx, {
-          type: 'bar',
+          type: "bar",
           data: {
-            labels: ['0-20%', '20-40%', '40-60%', '60-80%', '80-100%'],
+            labels: ["0-20%", "20-40%", "40-60%", "60-80%", "80-100%"],
             datasets: [
               {
-                label: 'Count',
+                label: "Count",
                 data: bins,
                 backgroundColor: [
-                  'rgba(185, 28, 28, 0.9)',
-                  'rgba(249, 115, 22, 0.9)',
-                  'rgba(234, 179, 8, 0.9)',
-                  'rgba(34, 197, 94, 0.9)',
-                  'rgba(22, 163, 74, 0.9)',
+                  "rgba(185, 28, 28, 0.9)",
+                  "rgba(249, 115, 22, 0.9)",
+                  "rgba(234, 179, 8, 0.9)",
+                  "rgba(34, 197, 94, 0.9)",
+                  "rgba(22, 163, 74, 0.9)",
                 ],
               },
             ],
@@ -1205,12 +1214,12 @@
             scales: {
               y: {
                 beginAtZero: true,
-                ticks: { color: '#94a3b8' },
-                grid: { color: '#1c1c2e' },
+                ticks: { color: "#94a3b8" },
+                grid: { color: "#1c1c2e" },
               },
               x: {
-                ticks: { color: '#94a3b8' },
-                grid: { color: '#1c1c2e' },
+                ticks: { color: "#94a3b8" },
+                grid: { color: "#1c1c2e" },
               },
             },
           },
@@ -1219,24 +1228,24 @@
 
       function renderLanguageChart(languages) {
         // Mock data
-        const ctx = document.getElementById('languageChart').getContext('2d');
+        const ctx = document.getElementById("languageChart").getContext("2d");
         new Chart(ctx, {
-          type: 'radar',
+          type: "radar",
           data: {
             labels: [
-              'English',
-              'Hindi',
-              'Marathi',
-              'Tamil',
-              'Telugu',
-              'Bengali',
+              "English",
+              "Hindi",
+              "Marathi",
+              "Tamil",
+              "Telugu",
+              "Bengali",
             ],
             datasets: [
               {
-                label: 'Similarity Score',
+                label: "Similarity Score",
                 data: [65, 59, 80, 81, 56, 55],
-                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                borderColor: 'rgba(59, 130, 246, 1)',
+                backgroundColor: "rgba(59, 130, 246, 0.2)",
+                borderColor: "rgba(59, 130, 246, 1)",
                 borderWidth: 2,
               },
             ],
@@ -1246,30 +1255,30 @@
             maintainAspectRatio: false,
             scales: {
               r: {
-                ticks: { color: '#94a3b8', backdropColor: 'transparent' },
-                grid: { color: '#1c1c2e' },
-                pointLabels: { color: '#94a3b8' },
+                ticks: { color: "#94a3b8", backdropColor: "transparent" },
+                grid: { color: "#1c1c2e" },
+                pointLabels: { color: "#94a3b8" },
               },
             },
             plugins: {
-              legend: { labels: { color: '#94a3b8' } },
+              legend: { labels: { color: "#94a3b8" } },
             },
           },
         });
       }
 
       document
-        .getElementById('sendToAdminBtn')
-        .addEventListener('click', async () => {
+        .getElementById("sendToAdminBtn")
+        .addEventListener("click", async () => {
           if (!currentBatchId) return;
 
-          if (!confirm('Send this entire batch for admin approval?')) return;
+          if (!confirm("Send this entire batch for admin approval?")) return;
 
           try {
             const res = await fetch(
               `${API}/batch/${currentBatchId}/request-approval`,
               {
-                method: 'POST',
+                method: "POST",
               },
             );
             const data = await res.json();
@@ -1279,10 +1288,10 @@
                 `Success! ${data.total_requests} titles sent for admin review.`,
               );
             } else {
-              throw new Error(data.detail || 'Request failed');
+              throw new Error(data.detail || "Request failed");
             }
           } catch (err) {
-            alert('Error: ' + err.message);
+            alert("Error: " + err.message);
           }
         });
     </script>
