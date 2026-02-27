@@ -11,14 +11,17 @@ THEMES = {
 def check_cross_language_similarity(new_title: str, existing_titles: list[str]) -> list[dict]:
     """
     Translates title and performs high-performance fuzzy matching.
-    Lightweight alternative to sentence-transformers.
+    Skips translation for ASCII-only titles (already in English).
     """
-    try:
-        # Always attempt translation to catch cross-language cases
-        translated = GoogleTranslator(source='auto', target='en').translate(new_title)
-        translated_upper = translated.upper()
-    except Exception:
+    if new_title.isascii():
+        # Title is already in English — no HTTP call needed
         translated_upper = new_title.upper()
+    else:
+        try:
+            translated = GoogleTranslator(source='auto', target='en').translate(new_title)
+            translated_upper = translated.upper()
+        except Exception:
+            translated_upper = new_title.upper()
     
     # Use C++ optimized process.extract
     matches = process.extract(

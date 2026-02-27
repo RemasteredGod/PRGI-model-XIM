@@ -5,6 +5,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'prgi_titles.db')
 
 TITLES_CACHE_LIST = []
 TITLES_CACHE_SET = set()
+PHONETIC_CACHE = {}  # title -> (soundex_frozenset, nysiis_frozenset), built at startup
 
 def get_connection():
     return sqlite3.connect(DB_PATH)
@@ -26,6 +27,17 @@ def load_titles_into_memory():
         TITLES_CACHE_LIST = list(merged_set)
         print(f"Loaded {len(titles_raw):,} titles from prgi_titles.db")
         print(f"After deduplication: {len(TITLES_CACHE_SET):,} unique titles ready")
+
+        # Precompute phonetic codes for all titles (eliminates per-query recomputation)
+        import jellyfish
+        PHONETIC_CACHE.clear()
+        for t in TITLES_CACHE_LIST:
+            words = t.split()  # already uppercase
+            PHONETIC_CACHE[t] = (
+                frozenset(jellyfish.soundex(w) for w in words if w),
+                frozenset(jellyfish.nysiis(w)  for w in words if w),
+            )
+        print(f"Phonetic cache ready for {len(PHONETIC_CACHE):,} titles")
     except Exception as e:
         print(f"Error loading titles: {e}")
 

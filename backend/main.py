@@ -1,7 +1,10 @@
 import os
 import io
 import json
+import uuid
+import time
 import pandas as pd
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -401,32 +404,32 @@ async def api_batch_upload(file: UploadFile = File(...)):
         # Create batch upload record
         batch_id = create_batch_upload(file.filename, len(titles))
         
-        # Process each title with error handling
-        import time
+        # Process titles in parallel — verify_title() is independent per title
         start_time = time.time()
         processed = 0
         errors = 0
-        
-        for idx, title in enumerate(titles, 1):
-            if title and title.strip():
+
+        def _process_one(title_str):
+            result = verify_title(title_str)
+            add_batch_result(batch_id, title_str, result)
+            return title_str
+
+        clean_titles = [t.strip() for t in titles if t and t.strip()]
+        with ThreadPoolExecutor(max_workers=min(12, len(clean_titles))) as pool:
+            futures = {pool.submit(_process_one, t): t for t in clean_titles}
+            for future in as_completed(futures):
                 try:
-                    result = verify_title(title.strip())
-                    add_batch_result(batch_id, title.strip(), result)
+                    future.result()
                     processed += 1
-                    
-                    # Log progress every 100 titles with ETA
                     if processed % 100 == 0:
                         elapsed = time.time() - start_time
                         rate = processed / elapsed if elapsed > 0 else 0
-                        remaining = (len(titles) - processed) / rate if rate > 0 else 0
-                        print(f"⏳ {processed:,}/{len(titles):,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
-                        
+                        remaining = (len(clean_titles) - processed) / rate if rate > 0 else 0
+                        print(f"⏳ {processed:,}/{len(clean_titles):,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
                 except Exception as e:
-                    print(f"❌ Error: '{title}' - {e}")
+                    print(f"❌ Error processing title - {e}")
                     errors += 1
-                    # Continue processing even if one fails
-                    continue
-        
+
         update_batch_status(batch_id, 'completed')
         
         total_time = time.time() - start_time
@@ -470,30 +473,31 @@ async def api_batch_upload_text(request: dict):
         # Create batch upload record
         batch_id = create_batch_upload("text_input.txt", total_titles)
         
-        # Process each title
-        import time
+        # Process titles in parallel — verify_title() is independent per title
         start_time = time.time()
         processed = 0
         errors = 0
-        
-        for idx, title in enumerate(titles, 1):
-            try:
-                result = verify_title(title)
-                add_batch_result(batch_id, title, result)
-                processed += 1
-                
-                # Log progress every 100 titles
-                if processed % 100 == 0:
-                    elapsed = time.time() - start_time
-                    rate = processed / elapsed if elapsed > 0 else 0
-                    remaining = (total_titles - processed) / rate if rate > 0 else 0
-                    print(f"⏳ {processed:,}/{total_titles:,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
-                    
-            except Exception as e:
-                print(f"❌ Error: '{title}' - {e}")
-                errors += 1
-                continue
-        
+
+        def _process_text_title(title_str):
+            result = verify_title(title_str)
+            add_batch_result(batch_id, title_str, result)
+            return title_str
+
+        with ThreadPoolExecutor(max_workers=min(12, total_titles)) as pool:
+            futures = {pool.submit(_process_text_title, t): t for t in titles}
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                    processed += 1
+                    if processed % 100 == 0:
+                        elapsed = time.time() - start_time
+                        rate = processed / elapsed if elapsed > 0 else 0
+                        remaining = (total_titles - processed) / rate if rate > 0 else 0
+                        print(f"⏳ {processed:,}/{total_titles:,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
+                except Exception as e:
+                    print(f"❌ Error processing title - {e}")
+                    errors += 1
+
         update_batch_status(batch_id, 'completed')
         
         total_time = time.time() - start_time
