@@ -554,6 +554,26 @@
           </div>
         </div>
 
+        <!-- Score Threshold Slider -->
+        <div class="threshold-container">
+          <div class="threshold-header">
+            <span class="threshold-label">🎯 Score Threshold</span>
+            <span class="threshold-value" id="thresholdValue">75%</span>
+          </div>
+          <input
+            type="range"
+            id="scoreThreshold"
+            class="threshold-slider"
+            min="0"
+            max="99"
+            value="75"
+            step="1"
+          />
+          <div class="threshold-hint">
+            Only titles scoring above this threshold will be added to temp database
+          </div>
+        </div>
+
         <div class="upload-status" id="uploadStatus">
           <div class="status-title">Processing...</div>
           <div class="progress-bar">
@@ -891,10 +911,20 @@
 
       uploadBtn.addEventListener('click', uploadFile);
 
+      // Score threshold slider
+      const scoreThreshold = document.getElementById('scoreThreshold');
+      const thresholdValue = document.getElementById('thresholdValue');
+      if (scoreThreshold && thresholdValue) {
+        scoreThreshold.addEventListener('input', (e) => {
+          thresholdValue.textContent = e.target.value + '%';
+        });
+      }
+
       async function uploadFile() {
         const uploadStatus = document.getElementById('uploadStatus');
         const progressFill = document.getElementById('progressFill');
         const statusText = document.getElementById('statusText');
+        const thresholdVal = scoreThreshold ? scoreThreshold.value : 75;
 
         uploadStatus.classList.add('active');
         uploadBtn.disabled = true;
@@ -928,9 +958,10 @@
 
             const formData = new FormData();
             formData.append('file', selectedFile);
+            formData.append('score_threshold', thresholdVal);
 
             progressFill.style.width = '30%';
-            statusText.textContent = 'Processing file...';
+            statusText.textContent = `Processing file (threshold: ${thresholdVal}%)...`;
 
             res = await fetch(`${API}/batch/upload`, {
               method: 'POST',
@@ -947,13 +978,27 @@
             currentBatchId = data.batch_id;
             progressFill.style.width = '100%';
             const processedMsg = data.processed || data.total_titles;
+            const acceptedMsg = data.accepted ? ` | ✅ ${data.accepted} → Temp2 DB` : '';
+            const rejectedMsg = data.rejected ? ` | ❌ ${data.rejected} rejected` : '';
             const errorsMsg = data.errors ? ` (${data.errors} errors)` : '';
-            statusText.textContent = `✓ Complete! ${processedMsg}/${data.total_titles} titles${errorsMsg}`;
+            statusText.textContent = `✓ Complete! ${processedMsg}/${data.total_titles}${acceptedMsg}${rejectedMsg}${errorsMsg}`;
 
+            // Show alert with accepted count
+            const acceptedCount = data.accepted || 0;
+            const rejectedCount = data.rejected || 0;
+            const totalProcessed = data.processed || data.total_titles || 0;
+            const thresholdDisplay = data.score_threshold || thresholdVal;
+            
+            if (acceptedCount > 0) {
+              alert(`✅ Success!\n\n${acceptedCount} title(s) automatically added to Temp2 Database\n\nTotal Processed: ${totalProcessed}\nAccepted: ${acceptedCount}\nRejected: ${rejectedCount}\n\nThreshold: ${thresholdDisplay}%`);
+            } else {
+              alert(`⚠️ Batch Complete\n\nNo titles met the threshold of ${thresholdDisplay}%\n\nTotal Processed: ${totalProcessed}\nRejected: ${rejectedCount}\n\nTip: Lower the threshold to accept more titles.`);
+            }
+            
             setTimeout(() => {
               uploadStatus.classList.remove('active');
               loadAnalytics(currentBatchId);
-            }, 2000);
+            }, 500);
           } else {
             throw new Error(data.detail || 'Upload failed');
           }

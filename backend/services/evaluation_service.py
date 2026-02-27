@@ -99,6 +99,88 @@ class TitleEvaluationService:
         # Run existing verification checks
         verification_result = verify_title(title)
         
+        # Check for exact match - if found, score should be 0%
+        priority_matches = verification_result.get("priority_matches", [])
+        has_exact_match = any(match.get("priority") == 1 for match in priority_matches)
+        
+        if has_exact_match:
+            # Exact match found - title already exists, score is 0%
+            evaluation_result = {
+                "title": title,
+                "normalized_title": normalized_title,
+                "score": 0.0,
+                "decision": "AUTO_REJECT",
+                "metrics": {
+                    "max_similarity": 1.0,
+                    "rule_compliance": 0.0,
+                    "prefix_suffix": 0.0,
+                    "combination": 0.0
+                },
+                "verification_result": verification_result,
+                "rejection_history": rejection_history,
+                "submitted_by": submitted_by
+            }
+            
+            # Save to cache
+            cls._save_to_cache(title, evaluation_result)
+            
+            return evaluation_result
+        
+        # Check for disallowed words and prefix/suffix violations
+        rejection_reasons = verification_result.get("rejection_reasons", [])
+        
+        # Check if title has disallowed words
+        has_disallowed_word = any("disallowed word" in reason.lower() for reason in rejection_reasons)
+        
+        # Check if title has prefix/suffix violations
+        has_prefix_suffix = any("prefix/suffix" in reason.lower() for reason in rejection_reasons)
+        
+        if has_disallowed_word:
+            # Disallowed word found - score is 0%
+            evaluation_result = {
+                "title": title,
+                "normalized_title": normalized_title,
+                "score": 0.0,
+                "decision": "AUTO_REJECT",
+                "metrics": {
+                    "max_similarity": 0.0,
+                    "rule_compliance": 0.0,
+                    "prefix_suffix": 0.0,
+                    "combination": 0.0
+                },
+                "verification_result": verification_result,
+                "rejection_history": rejection_history,
+                "submitted_by": submitted_by
+            }
+            
+            # Save to cache
+            cls._save_to_cache(title, evaluation_result)
+            
+            return evaluation_result
+        
+        if has_prefix_suffix:
+            # Prefix/suffix violation - score is very low and AUTO_REJECT
+            evaluation_result = {
+                "title": title,
+                "normalized_title": normalized_title,
+                "score": 5.0,  # Very low score but not 0 to distinguish from disallowed words
+                "decision": "AUTO_REJECT",
+                "metrics": {
+                    "max_similarity": 0.0,
+                    "rule_compliance": 0.0,
+                    "prefix_suffix": 0.0,
+                    "combination": 0.0
+                },
+                "verification_result": verification_result,
+                "rejection_history": rejection_history,
+                "submitted_by": submitted_by
+            }
+            
+            # Save to cache
+            cls._save_to_cache(title, evaluation_result)
+            
+            return evaluation_result
+        
         # Extract scores from verification checks
         checks = verification_result["checks"]
         
@@ -129,13 +211,17 @@ class TitleEvaluationService:
         has_combination = rules.get("has_combination", False)
         combination_score = 0.0 if has_combination else 1.0
         
-        # Apply weighted formula
+        # Apply weighted formula (scaled to max 99% instead of 100%)
         final_score = (
             (1.0 - max_cosine_similarity) * 0.45 +
             rule_compliance_score * 0.30 +
             prefix_suffix_score * 0.15 +
             combination_score * 0.10
-        ) * 100.0  # Convert to percentage
+        ) * 99.0  # Convert to percentage (max 99%)
+        
+        # Cap scores above 75% to 99%
+        if final_score > 75:
+            final_score = 99.0
         
         # Determine decision based on score thresholds
         if final_score < 30:

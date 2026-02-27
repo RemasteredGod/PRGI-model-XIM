@@ -23,7 +23,8 @@ from backend.database import (init_db, add_disallowed_word, delete_disallowed_wo
                               get_batch_results, get_batch_analytics, approve_batch_titles,
                               verify_admin_password, get_admin_config, set_admin_config, get_connection,
                               check_rejected_history, insert_rejected_title, get_rejected_titles,
-                              insert_temp2_with_evaluation, update_rejected_retry_status)
+                              insert_temp2_with_evaluation, update_rejected_retry_status,
+                              clear_temp_batch_data)
 
 security = HTTPBasic()
 
@@ -336,7 +337,7 @@ async def api_search_rejected(title: str):
 # ── BATCH PROCESSING ENDPOINTS ──
 
 @app.post("/api/batch/upload")
-async def api_batch_upload(file: UploadFile = File(...)):
+async def api_batch_upload(file: UploadFile = File(...), score_threshold: float = Form(75.0)):
     print(f"\n{'='*60}")
     print(f"📥 BATCH UPLOAD REQUEST RECEIVED")
     print(f"{'='*60}")
@@ -344,7 +345,15 @@ async def api_batch_upload(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file uploaded")
     
+    # Validate score threshold
+    if score_threshold < 0 or score_threshold > 99:
+        raise HTTPException(status_code=400, detail="Score threshold must be between 0 and 99")
+    
     print(f"📄 File: {file.filename}")
+    print(f"🎯 Score Threshold: {score_threshold}%")
+    
+    # Clear temp batch database before new upload
+    clear_temp_batch_data()
     
     # Read file content
     content = await file.read()
@@ -404,28 +413,59 @@ async def api_batch_upload(file: UploadFile = File(...)):
         # Create batch upload record
         batch_id = create_batch_upload(file.filename, len(titles))
         
-        # Process titles in parallel — verify_title() is independent per title
+        # Process titles with score filtering (only add if score > threshold)
         start_time = time.time()
         processed = 0
+        accepted = 0
+        rejected = 0
         errors = 0
 
         def _process_one(title_str):
-            result = verify_title(title_str)
-            add_batch_result(batch_id, title_str, result)
-            return title_str
+            try:
+                # Use evaluation service to get score
+                evaluation_result = TitleEvaluationService.evaluate_title(title_str)
+                score = evaluation_result.get('score', 0)
+                
+                # Only add to batch_results and temp2 if score > threshold
+                if score > score_threshold:
+                    result = evaluation_result['verification_result']
+                    add_batch_result(batch_id, title_str, result)
+                    
+                    # Automatically add to temp2 database
+                    metrics = evaluation_result.get('metrics', {})
+                    temp2_id = insert_temp2_with_evaluation(
+                        title=title_str,
+                        approved_by='SYSTEM_BATCH',
+                        evaluation_score=score,
+                        evaluation_metrics=metrics
+                    )
+                    print(f"✅ Added to Temp2: '{title_str}' (score: {score:.1f}%, temp2_id: {temp2_id})")
+                    
+                    return ('accepted', title_str)
+                else:
+                    return ('rejected', title_str)
+            except Exception as e:
+                print(f"❌ Error processing '{title_str}': {str(e)}")
+                raise
+        
 
         clean_titles = [t.strip() for t in titles if t and t.strip()]
         with ThreadPoolExecutor(max_workers=min(12, len(clean_titles))) as pool:
             futures = {pool.submit(_process_one, t): t for t in clean_titles}
             for future in as_completed(futures):
                 try:
-                    future.result()
+                    status, title = future.result()
                     processed += 1
+                    if status == 'accepted':
+                        accepted += 1
+                    else:
+                        rejected += 1
+                    
                     if processed % 100 == 0:
                         elapsed = time.time() - start_time
                         rate = processed / elapsed if elapsed > 0 else 0
                         remaining = (len(clean_titles) - processed) / rate if rate > 0 else 0
-                        print(f"⏳ {processed:,}/{len(clean_titles):,} titles | {rate:.1f} titles/sec | ETA: {int(remaining)}s | {errors} errors")
+                        print(f"⏳ {processed:,}/{len(clean_titles):,} titles | ✅ {accepted} accepted | ❌ {rejected} rejected | {rate:.1f} titles/sec | ETA: {int(remaining)}s")
                 except Exception as e:
                     print(f"❌ Error processing title - {e}")
                     errors += 1
@@ -437,15 +477,21 @@ async def api_batch_upload(file: UploadFile = File(...)):
         print(f"✅ BATCH COMPLETE!")
         print(f"⏱️  Time: {total_time:.1f}s ({len(titles)/total_time:.1f} titles/sec)")
         print(f"✔️  Processed: {processed:,}/{len(titles):,}")
+        print(f"✅ Accepted & Added to Temp2 DB: {accepted:,} (score > {score_threshold})")
+        print(f"❌ Rejected: {rejected:,} (score ≤ {score_threshold})")
         print(f"❌ Errors: {errors}")
         print(f"{'='*60}\n")
         
         return {
-            "message": "Batch upload completed",
+            "message": f"Batch upload completed. {accepted} titles added to Temp2 DB",
             "batch_id": batch_id,
             "total_titles": len(titles),
             "processed": processed,
-            "errors": errors
+            "accepted": accepted,
+            "rejected": rejected,
+            "errors": errors,
+            "score_threshold": score_threshold,
+            "auto_approved": accepted
         }
     
     except Exception as e:

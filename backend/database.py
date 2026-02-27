@@ -463,7 +463,13 @@ def insert_temp2_with_evaluation(title, approved_by, evaluation_score=None, eval
     conn = get_connection()
     cursor = conn.cursor()
     
-    metrics_json = json.dumps(evaluation_metrics) if evaluation_metrics else None
+    # Convert metrics dict to JSON string if it's a dict
+    if isinstance(evaluation_metrics, dict):
+        metrics_json = json.dumps(evaluation_metrics)
+    elif isinstance(evaluation_metrics, str):
+        metrics_json = evaluation_metrics
+    else:
+        metrics_json = None
     
     cursor.execute('''
     INSERT INTO temp2 (title, approved_by, evaluation_score, evaluation_metrics)
@@ -473,6 +479,7 @@ def insert_temp2_with_evaluation(title, approved_by, evaluation_score=None, eval
     conn.commit()
     temp2_id = cursor.lastrowid
     conn.close()
+    print(f"📝 Inserted into temp2: id={temp2_id}, title='{title}', score={evaluation_score}")
     return temp2_id
 
 def update_rejected_retry_status(rejected_id, retry_allowed=True):
@@ -629,3 +636,17 @@ def set_admin_config(key, value):
     ''', (key, value))
     conn.commit()
     conn.close()
+
+def clear_temp_batch_data():
+    """Clear all batch upload, batch result data, and temp2 database"""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM batch_results')
+    cursor.execute('DELETE FROM batch_uploads')
+    cursor.execute('DELETE FROM temp2')
+    cursor.execute('DELETE FROM approval_requests')
+    # Reset autoincrement counters
+    cursor.execute('DELETE FROM sqlite_sequence WHERE name IN ("batch_results", "batch_uploads", "temp2", "approval_requests")')
+    conn.commit()
+    conn.close()
+    print("✅ Temp batch database cleared (batch_results, batch_uploads, temp2, approval_requests)")
