@@ -31,6 +31,128 @@
         --yellow-dim: rgba(217, 119, 6, 0.1);
         --r: 8px;
         --r-sm: 5px;
+        /* theme-aware grid color used in body background */
+        --grid-line: rgba(148, 163, 184, 0.035);
+        --hero-grid-line: rgba(200, 210, 255, 0.09);
+        --navbar-bg: rgba(6, 6, 12, 0.9);
+        --hero-grad-start: #0d0d1a;
+      }
+
+      /* ══════════════════════════════════════════
+         LIGHT THEME — overrides every CSS variable
+         and every hardcoded dark color
+         ══════════════════════════════════════════ */
+      html.light {
+        --bg: #f2f4fb;
+        --surface: #ffffff;
+        --surface-2: #eef0f8;
+        --surface-3: #e5e8f3;
+        --border: #dde1ef;
+        --border-2: #c8cfea;
+        --accent: #b91c1c;
+        --accent-hover: #dc2626;
+        --accent-dim: rgba(185, 28, 28, 0.09);
+        --accent-glow: rgba(185, 28, 28, 0.05);
+        --text-1: #0f172a;
+        --text-2: #475569;
+        --text-3: #94a3b8;
+        --green: #15803d;
+        --green-dim: rgba(22, 163, 74, 0.1);
+        --yellow: #b45309;
+        --yellow-dim: rgba(217, 119, 6, 0.1);
+        --grid-line: rgba(15, 23, 42, 0.07);
+        --hero-grid-line: rgba(15, 23, 42, 0.08);
+        --navbar-bg: rgba(255, 255, 255, 0.92);
+        --hero-grad-start: #e8ebf8;
+      }
+
+      /* ── light: hardcoded-color overrides ── */
+      html.light body {
+        background-image:
+          linear-gradient(var(--grid-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      }
+      html.light .navbar { background: var(--navbar-bg); }
+      html.light .hero { background: linear-gradient(170deg, var(--hero-grad-start) 0%, var(--bg) 100%); }
+      html.light .hero::before {
+        background-image:
+          linear-gradient(var(--hero-grid-line) 1px, transparent 1px),
+          linear-gradient(90deg, var(--hero-grid-line) 1px, transparent 1px);
+      }
+      html.light .np-edition-row   { background: rgba(0,0,0,0.04); }
+      html.light .np-thin-rule     { background: var(--border-2); }
+      html.light .np-double-rule   { border-color: rgba(185,28,28,0.65); }
+      html.light .np-col-div       { background: var(--border-2); }
+
+      /* Bento input hero */
+      html.light .bento-input-hero {
+        background: linear-gradient(145deg, #ebebff 0%, #f6f7ff 100%);
+        border-color: rgba(99,102,241,0.28);
+      }
+      html.light .bento-input-hero::before {
+        background-image:
+          linear-gradient(rgba(99,102,241,0.07) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(99,102,241,0.07) 1px, transparent 1px);
+      }
+      html.light .bento-input-hero input[type='text'] {
+        background: #ffffff;
+        border-color: rgba(99,102,241,0.3);
+      }
+
+      /* Bento result cards */
+      html.light .b-score      { background: linear-gradient(160deg,#eef3ff 0%,#f5f8ff 100%); border-color:rgba(59,130,246,0.22); }
+      html.light .b-decision   { background: linear-gradient(160deg,#f9f9ff 0%,#ffffff 100%); border-color:var(--border-2); }
+      html.light .b-checks     { background: linear-gradient(160deg,#f4efff 0%,#f9f6ff 100%); border-color:rgba(139,92,246,0.22); }
+      html.light .b-violations { background: linear-gradient(160deg,#fff4f4 0%,#fff8f8 100%); border-color:rgba(239,68,68,0.18); }
+      html.light .b-matches    { background: linear-gradient(160deg,#eff1ff 0%,#f5f7ff 100%); border-color:rgba(99,102,241,0.2); }
+      html.light .b-suggestions{ background: linear-gradient(160deg,#effffa 0%,#f5fffb 100%); border-color:rgba(16,185,129,0.22); }
+      html.light .b-score .ring-track { stroke: rgba(59,130,246,0.15); }
+
+      /* Check pills */
+      html.light .b-checks .check-pill { background:rgba(139,92,246,0.07); border-color:rgba(139,92,246,0.22); }
+      html.light .b-checks .check-pill svg { color:#7c3aed; }
+      html.light .b-checks .check-pill b  { color:#7c3aed; }
+
+      /* Match rows */
+      html.light .b-matches .match-row { background:rgba(99,102,241,0.04); border-color:rgba(99,102,241,0.15); }
+
+      /* Violation items */
+      html.light .v-item { background:var(--accent-dim); border-color:rgba(185,28,28,0.15); }
+      html.light .v-item.warn { background:var(--yellow-dim); border-color:rgba(217,119,6,0.15); }
+
+      /* Metrics grid */
+      html.light .dm-item { background:#eef0f8; border-color:var(--border); }
+
+      /* Suggestion chips */
+      html.light .b-suggestions .suggestion-chip { background:rgba(16,185,129,0.09); border-color:rgba(16,185,129,0.3); color:#059669; }
+
+      /* Database table */
+      html.light thead tr  { background: #eaecf7; }
+      html.light th        { background: #e2e5f5 !important; color: #3b4a8a; border-color: var(--border-2); }
+      html.light th:hover  { background: #d8dcf0 !important; color: #1e2a72; }
+      html.light td        { color: #334155; border-color: var(--border); }
+      html.light td:first-child { background: #f0f2fb !important; border-right-color: var(--border-2); color: var(--text-3); }
+      html.light td.t-name { color: #0f172a; }
+      html.light .table-scroll { border-color: var(--border-2); }
+      html.light tbody tr:nth-child(even) { background: rgba(0,0,0,0.018); }
+      html.light tbody tr:hover { background: rgba(99,102,241,0.06) !important; }
+      html.light tbody tr:hover td { color: #0f172a; }
+
+      /* Aurora blobs — softer in light mode */
+      html.light .aurora-blob-1 { opacity: 0.3; }
+      html.light .aurora-blob-2 { opacity: 0.2; }
+      html.light .aurora-blob-3 { opacity: 0.15; }
+
+      /* ── SMOOTH THEME TRANSITION ── */
+      .theme-transitioning *,
+      .theme-transitioning *::before,
+      .theme-transitioning *::after {
+        transition:
+          background-color 0.3s ease,
+          border-color 0.3s ease,
+          color 0.25s ease,
+          fill 0.25s ease,
+          stroke 0.25s ease !important;
       }
 
       *,
@@ -42,7 +164,12 @@
       }
 
       body {
-        background: var(--bg);
+        background-color: var(--bg);
+        /* Subtle uniform grid — shows in page margins & gaps between cards */
+        background-image:
+          linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+        background-size: 36px 36px;
         color: var(--text-1);
         font-family: 'Inter', system-ui, sans-serif;
         font-size: 14px;
@@ -144,13 +271,78 @@
         border-bottom-color: var(--accent);
       }
 
+      /* ── THEME TOGGLE BUTTON ── */
+      .theme-toggle {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 34px;
+        padding: 0 13px;
+        margin-left: 14px;
+        background: var(--surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: 20px;
+        cursor: pointer;
+        color: var(--text-2);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: all 0.2s cubic-bezier(0.22,1,0.36,1);
+      }
+      .theme-toggle:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--accent-dim);
+        transform: translateY(-1px);
+      }
+      .theme-toggle svg { width: 14px; height: 14px; flex-shrink: 0; }
+      /* show moon in dark, sun in light */
+      .tt-sun  { display: none; }
+      .tt-moon { display: block; }
+      html.light .tt-moon { display: none; }
+      html.light .tt-sun  { display: block; }
+      .tt-label-dark  { display: inline; }
+      .tt-label-light { display: none; }
+      html.light .tt-label-dark  { display: none; }
+      html.light .tt-label-light { display: inline; }
+
       /* ── HERO ── */
       .hero {
         background: linear-gradient(170deg, #0d0d1a 0%, var(--bg) 100%);
         border-bottom: 1px solid var(--border);
         padding: 44px 28px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
       }
+      /* Radial-vignette grid — darkest at centre, dissolves to nothing at edges */
+      .hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(200, 210, 255, 0.09) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(200, 210, 255, 0.09) 1px, transparent 1px);
+        background-size: 36px 36px;
+        -webkit-mask-image: radial-gradient(
+          ellipse 75% 130% at 50% 50%,
+          black 0%,
+          rgba(0,0,0,0.55) 40%,
+          transparent 72%
+        );
+        mask-image: radial-gradient(
+          ellipse 75% 130% at 50% 50%,
+          black 0%,
+          rgba(0,0,0,0.55) 40%,
+          transparent 72%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+      .hero > * { position: relative; z-index: 1; }
       .hero h1 {
         font-family: 'Playfair Display', serif;
         font-size: 36px;
@@ -964,35 +1156,678 @@
       }
 
       @media (max-width: 720px) {
-        .navbar {
-          padding: 0 14px;
+        .navbar { padding: 0 14px; }
+        .hero { padding: 28px 14px; }
+        .hero h1 { font-size: 24px; }
+        .main { padding: 18px 14px; }
+        .stats-grid { grid-template-columns: 1fr; }
+        .prob-row { flex-direction: column; text-align: center; }
+        .check-pills { justify-content: center; }
+        .hero-badges { flex-wrap: wrap; border-radius: 8px; }
+        .hero-sep { display: none; }
+      }
+
+      /* ═══════════════════════════════════════════════
+         BENTO GRID — VALIDATOR PAGE
+         ═══════════════════════════════════════════════ */
+
+      /* ── INPUT HERO CARD ── */
+      .bento-input-hero {
+        background: linear-gradient(145deg, #0c0c22 0%, #090910 100%);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 16px;
+        padding: 28px 32px 24px;
+        margin-bottom: 14px;
+        position: relative;
+        overflow: hidden;
+      }
+      .bento-input-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+      }
+      .bento-input-hero::after {
+        content: '';
+        position: absolute;
+        top: -90px; right: -90px;
+        width: 300px; height: 300px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%);
+        pointer-events: none;
+      }
+      .bih-header {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 22px;
+        position: relative;
+        z-index: 1;
+      }
+      .bih-icon-wrap {
+        width: 54px; height: 54px;
+        background: rgba(99,102,241,0.12);
+        border: 1px solid rgba(99,102,241,0.32);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .bih-icon-wrap svg { width: 26px; height: 26px; color: #818cf8; }
+      .bih-title {
+        font-size: 20px; font-weight: 700;
+        letter-spacing: -0.3px; color: var(--text-1); line-height: 1.1;
+      }
+      .bih-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+      .bento-input-hero .title-input-row {
+        position: relative; margin-bottom: 0; z-index: 1;
+      }
+      .bento-input-hero input[type='text'] {
+        background: rgba(0,0,0,0.45);
+        border: 1px solid rgba(99,102,241,0.32);
+        font-size: 16px;
+        padding: 14px 14px 14px 50px;
+        border-radius: 12px;
+      }
+      .bento-input-hero input[type='text']:focus {
+        border-color: rgba(99,102,241,0.65);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+      }
+      .bento-input-hero .input-icon {
+        color: #6366f1; width: 20px; height: 20px; left: 16px;
+      }
+      .bih-footer {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap; gap: 12px;
+        margin-top: 14px; position: relative; z-index: 1;
+      }
+      .bih-footer .chips { margin: 0; flex: 1; }
+      .bento-input-hero .btn-primary {
+        background: linear-gradient(135deg, #4338ca, #6366f1);
+        border-radius: 10px; padding: 12px 26px;
+        font-size: 14px; letter-spacing: 0.5px;
+        box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+        flex-shrink: 0;
+      }
+      .bento-input-hero .btn-primary:hover {
+        background: linear-gradient(135deg, #3730a3, #4f46e5);
+        box-shadow: 0 6px 24px rgba(99,102,241,0.5);
+        transform: translateY(-1px);
+      }
+      .bento-input-hero .loader { margin: 14px auto 0; }
+
+      /* ── BENTO RESULTS GRID ── */
+      .bento-results {
+        display: grid;
+        grid-template-columns: 210px 1fr 1fr;
+        grid-template-rows: auto auto auto;
+        grid-template-areas:
+          "score decision checks"
+          "score violations violations"
+          "matches matches suggestions";
+        gap: 12px;
+        animation: fadeSlideIn 0.3s ease;
+      }
+
+      /* ── BASE BENTO CARD ── */
+      .bento-card {
+        border-radius: 14px;
+        overflow: hidden;
+        position: relative;
+      }
+      .bc-head {
+        display: flex; align-items: center; gap: 10px;
+        padding: 14px 16px 0;
+        font-size: 10px; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 1.2px;
+        color: var(--text-3);
+      }
+      .bc-icon {
+        width: 26px; height: 26px; border-radius: 7px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      }
+      .bc-icon svg { width: 13px; height: 13px; }
+      .bc-icon-blue   { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+      .bc-icon-violet { background: rgba(139,92,246,0.15);  color: #a78bfa; }
+      .bc-icon-red    { background: rgba(239,68,68,0.15);   color: #f87171; }
+      .bc-icon-indigo { background: rgba(99,102,241,0.15);  color: #818cf8; }
+      .bc-icon-emerald{ background: rgba(16,185,129,0.15);  color: #34d399; }
+
+      /* ── SCORE CARD ── */
+      .b-score {
+        grid-area: score;
+        background: linear-gradient(160deg, #07101f 0%, #050810 100%);
+        border: 1px solid rgba(59,130,246,0.22);
+        display: flex; flex-direction: column;
+        align-items: center; padding: 0 0 22px;
+      }
+      .b-score .ring-wrap { width: 140px; height: 140px; margin: 18px auto 0; }
+      .b-score .prob-svg  { width: 140px; height: 140px; }
+      .b-score .ring-track { stroke: rgba(59,130,246,0.1); stroke-width: 8; }
+      .b-score .ring-fill  { stroke-width: 8; }
+      .b-score .ring-pct   { font-size: 30px; }
+      .score-sub {
+        margin-top: 14px; font-size: 11px;
+        color: var(--text-3); text-align: center; padding: 0 16px;
+      }
+
+      /* ── DECISION CARD ── */
+      .b-decision {
+        grid-area: decision;
+        background: linear-gradient(160deg, #0c0c18 0%, #08080f 100%);
+        border: 1px solid var(--border-2);
+        display: flex; flex-direction: column;
+      }
+      .b-decision .result-banner {
+        border-radius: 0; font-size: 11px; padding: 10px 16px;
+        border-bottom: 1px solid;
+      }
+      .b-decision .banner-approved { border-bottom-color: rgba(22,163,74,0.2); }
+      .b-decision .banner-rejected { border-bottom-color: rgba(185,28,28,0.2); }
+      .b-decision .banner-pending  { border-bottom-color: rgba(217,119,6,0.2); }
+      .decision-body { padding: 16px; flex: 1; }
+      .decision-body h3 { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+      .decision-body p  { font-size: 12px; color: var(--text-2); line-height: 1.7; }
+      .decision-metrics {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 7px;
+        margin-top: 14px; padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+      .dm-item {
+        background: var(--surface-2);
+        border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
+      }
+      .dm-label { font-size: 9px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; }
+      .dm-value { font-size: 18px; font-weight: 700; margin-top: 2px; line-height: 1; }
+      .b-decision #rejectionWarning { padding: 0 16px; }
+      .b-decision #rejectionWarning .rejection-warning { margin: 8px 0 0; }
+      .b-decision #requestApprovalArea { padding: 0 16px 16px; }
+      .btn-submit-approval {
+        width: 100%; padding: 11px 16px;
+        background: rgba(59,130,246,0.1);
+        color: #60a5fa;
+        border: 1px solid rgba(59,130,246,0.25);
+        border-radius: 10px; font-size: 13px; font-weight: 600;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+      }
+      .btn-submit-approval:hover {
+        background: rgba(59,130,246,0.18);
+        border-color: rgba(59,130,246,0.45);
+      }
+      .btn-submit-approval svg { width: 16px; height: 16px; }
+
+      /* ── CHECKS CARD ── */
+      .b-checks {
+        grid-area: checks;
+        background: linear-gradient(160deg, #0d0a1f 0%, #080714 100%);
+        border: 1px solid rgba(139,92,246,0.2);
+        padding: 0 0 16px;
+      }
+      .b-checks .check-pills {
+        padding: 12px 14px 0;
+        flex-direction: column; gap: 7px;
+      }
+      .b-checks .check-pill {
+        background: rgba(139,92,246,0.07);
+        border: 1px solid rgba(139,92,246,0.16);
+        border-radius: 10px; padding: 9px 13px;
+        width: 100%; justify-content: space-between; font-size: 12px;
+      }
+      .b-checks .check-pill svg { color: #a78bfa; }
+      .b-checks .check-pill b   { color: #a78bfa; font-size: 15px; }
+
+      /* ── VIOLATIONS CARD ── */
+      .b-violations {
+        grid-area: violations;
+        background: linear-gradient(160deg, #120909 0%, #0c0606 100%);
+        border: 1px solid rgba(239,68,68,0.15);
+        padding: 0 0 14px;
+      }
+      .b-violations #reasonsArea { padding: 10px 14px 0; }
+      .b-violations .violation-list { margin: 0; gap: 6px; }
+      .bento-empty-state {
+        font-size: 12px; color: var(--text-3);
+        display: flex; align-items: center; gap: 8px;
+        padding: 16px 14px 0;
+      }
+      .bento-empty-state svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+      /* ── MATCHES CARD ── */
+      .b-matches {
+        grid-area: matches;
+        background: linear-gradient(160deg, #080b1e 0%, #060816 100%);
+        border: 1px solid rgba(99,102,241,0.18);
+        padding: 0 0 14px;
+      }
+      .b-matches #similarTitlesArea {
+        padding: 10px 14px 0;
+        max-height: 360px; overflow-y: auto;
+      }
+      .b-matches .matches-title { padding-top: 0; margin-bottom: 12px; }
+      .b-matches .p-group { margin-bottom: 16px; }
+      .b-matches .match-row {
+        background: rgba(99,102,241,0.05);
+        border-color: rgba(99,102,241,0.12);
+      }
+      .b-matches .match-row:hover { border-color: rgba(99,102,241,0.3); }
+      .b-matches .match-bar-f { background: #6366f1; }
+      .b-matches .match-pct  { color: #818cf8; }
+
+      /* ── SUGGESTIONS CARD ── */
+      .b-suggestions {
+        grid-area: suggestions;
+        background: linear-gradient(160deg, #071411 0%, #060f0d 100%);
+        border: 1px solid rgba(16,185,129,0.18);
+        padding: 0 0 16px;
+      }
+      .b-suggestions #suggestionsArea { padding: 10px 14px 0; }
+      .b-suggestions .suggestions-box { margin: 0; background: none; border: none; padding: 0; }
+      .b-suggestions .suggestions-box h4 { display: none; }
+      .b-suggestions .suggestion-chips { gap: 7px; }
+      .b-suggestions .suggestion-chip {
+        border-color: rgba(16,185,129,0.28);
+        background: rgba(16,185,129,0.07);
+        color: #34d399; border-radius: 10px;
+      }
+      .b-suggestions .suggestion-chip:hover {
+        background: rgba(16,185,129,0.14);
+        color: #6ee7b7; border-color: rgba(16,185,129,0.5);
+      }
+
+      /* ════════════════════════════════════════════════
+         NEWSPAPER UI
+         ════════════════════════════════════════════════ */
+
+      /* ── Double rule ── */
+      .np-double-rule {
+        height: 5px;
+        border-top: 1.5px solid rgba(185,28,28,0.8);
+        border-bottom: 1.5px solid rgba(185,28,28,0.8);
+        background: transparent;
+        margin: 0;
+      }
+
+      /* ── Thin rule ── */
+      .np-thin-rule {
+        width: 100%;
+        height: 1px;
+        background: var(--border-2);
+        margin: 0;
+      }
+
+      /* ── Edition row (volume · date · city) ── */
+      .np-edition-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 28px;
+        font-size: 10px;
+        color: var(--text-3);
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        font-family: 'Playfair Display', serif;
+        font-style: italic;
+        background: rgba(0,0,0,0.2);
+      }
+      .np-edition-dot { color: var(--accent); margin: 0 6px; }
+
+      /* ── Masthead title ── */
+      .np-masthead {
+        padding: 22px 28px 18px;
+      }
+      .np-masthead-eyebrow {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      .np-masthead-eyebrow::before,
+      .np-masthead-eyebrow::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border-2);
+        max-width: 80px;
+      }
+      .np-masthead-title {
+        font-family: 'Playfair Display', serif;
+        font-size: clamp(24px, 4.5vw, 52px);
+        font-weight: 700;
+        letter-spacing: -1px;
+        color: var(--text-1);
+        line-height: 1;
+        text-align: center;
+        margin-bottom: 6px;
+      }
+      .np-masthead-title .np-red { color: var(--accent); }
+      .np-masthead-sub {
+        font-size: 11px;
+        letter-spacing: 3.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+        text-align: center;
+        font-family: 'Inter', sans-serif;
+      }
+
+      /* ── Column stats row ── */
+      .np-stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1px 1fr 1px 1fr;
+        align-items: center;
+        padding: 0;
+      }
+      .np-col-div {
+        width: 1px;
+        align-self: stretch;
+        background: var(--border-2);
+      }
+      .np-stat-col {
+        padding: 12px 20px;
+        text-align: center;
+      }
+      .np-stat-col strong {
+        display: block;
+        font-family: 'Playfair Display', serif;
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-1);
+        line-height: 1;
+        margin-bottom: 3px;
+      }
+      .np-stat-col span {
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--text-3);
+      }
+
+      /* ── Kicker strip (sits above content in bento cards) ── */
+      .np-kicker-strip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 18px;
+      }
+      .np-kicker-label {
+        font-size: 8.5px;
+        font-weight: 700;
+        letter-spacing: 2.5px;
+        text-transform: uppercase;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .np-kicker-rule {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(to right, rgba(185,28,28,0.5), transparent);
+      }
+
+      /* ── Verdict banner (inside decision card) ── */
+      .b-decision .result-banner {
+        font-family: 'Playfair Display', serif;
+        font-size: 12px;
+        font-style: italic;
+        letter-spacing: 0.5px;
+      }
+      .b-decision .banner-approved {
+        background: linear-gradient(90deg, rgba(22,163,74,0.12), rgba(22,163,74,0.05));
+      }
+      .b-decision .banner-rejected {
+        background: linear-gradient(90deg, rgba(185,28,28,0.15), rgba(185,28,28,0.05));
+      }
+      .b-decision .banner-pending {
+        background: linear-gradient(90deg, rgba(217,119,6,0.12), rgba(217,119,6,0.05));
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 720px) {
+        .np-edition-row { padding: 6px 14px; font-size: 9px; }
+        .np-masthead { padding: 16px 14px 12px; }
+        .np-masthead-title { font-size: 28px; }
+        .np-stats-row { grid-template-columns: 1fr 1px 1fr; }
+        .np-stats-row .np-stat-col:last-child,
+        .np-stats-row .np-col-div:last-of-type { display: none; }
+      }
+
+      /* ════════════════════════════════════════════════
+         MAGIC UI ANIMATIONS
+         ════════════════════════════════════════════════ */
+
+      /* ── Core keyframes ── */
+      @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @keyframes scalePop {
+        0%   { opacity: 0; transform: scale(0.82); }
+        65%  { transform: scale(1.06); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-14px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes npRuleReveal {
+        from { opacity: 0; transform: scaleX(0); transform-origin: center; }
+        to   { opacity: 1; transform: scaleX(1); transform-origin: center; }
+      }
+      @keyframes shimmerSweep {
+        0%   { left: -80%; }
+        100% { left: 150%; }
+      }
+      @keyframes ringGlowPulse {
+        0%, 100% { filter: drop-shadow(0 0 1px var(--ring-glow, transparent)); }
+        50%       { filter: drop-shadow(0 0 14px var(--ring-glow, transparent)); }
+      }
+      @keyframes bentoPop {
+        0%   { opacity: 0; transform: translateY(26px) scale(0.95); }
+        68%  { transform: translateY(-3px) scale(1.006); }
+        100% { opacity: 1; transform: none; }
+      }
+      @keyframes rippleOut {
+        to { transform: scale(4); opacity: 0; }
+      }
+      @keyframes scanLine {
+        0%   { top: -4%; opacity: 0; }
+        8%   { opacity: 1; }
+        90%  { opacity: 0.6; }
+        100% { top: 108%; opacity: 0; }
+      }
+      @keyframes aurora1 {
+        0%, 100% { transform: translate(0,0) scale(1); }
+        38%      { transform: translate(55px,-38px) scale(1.13); }
+        72%      { transform: translate(-32px,20px) scale(0.91); }
+      }
+      @keyframes aurora2 {
+        0%, 100% { transform: translate(0,0) scale(1); }
+        42%      { transform: translate(-60px,28px) scale(1.09); }
+        68%      { transform: translate(38px,-22px) scale(0.95); }
+      }
+      @keyframes iconFloat {
+        0%, 100% { transform: translateY(0); }
+        50%      { transform: translateY(-5px); }
+      }
+      @keyframes borderPulse {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.5; }
+      }
+
+      /* ── AURORA BLOBS (injected via JS) ── */
+      .aurora-blob {
+        position: fixed; border-radius: 50%;
+        pointer-events: none; filter: blur(90px); z-index: 0; opacity: 0;
+      }
+      .aurora-blob-1 {
+        width: 440px; height: 340px;
+        background: radial-gradient(ellipse, rgba(99,102,241,0.13) 0%, transparent 70%);
+        top: -80px; left: 18%;
+        animation: aurora1 14s ease-in-out infinite, fadeIn 2.5s ease forwards;
+      }
+      .aurora-blob-2 {
+        width: 380px; height: 380px;
+        background: radial-gradient(ellipse, rgba(185,28,28,0.09) 0%, transparent 70%);
+        top: 30px; right: 7%;
+        animation: aurora2 17s ease-in-out infinite 1s, fadeIn 2.5s ease 0.5s forwards;
+      }
+      .aurora-blob-3 {
+        width: 300px; height: 260px;
+        background: radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, transparent 70%);
+        bottom: 20%; left: 3%;
+        animation: aurora1 21s ease-in-out infinite 3s, fadeIn 2.5s ease 1s forwards;
+      }
+
+      /* ── NAVBAR entrance ── */
+      .navbar { animation: fadeIn 0.45s ease both; }
+
+      /* ── HERO MASTHEAD stagger ── */
+      .hero .np-double-rule               { animation: npRuleReveal 0.9s cubic-bezier(0.22,1,0.36,1) both 0s; }
+      .hero .np-edition-row               { animation: fadeIn 0.55s ease both 0.14s; }
+      .hero .np-thin-rule                 { animation: npRuleReveal 0.9s cubic-bezier(0.22,1,0.36,1) both 0.2s; }
+      .hero .np-masthead                  { animation: fadeUp 0.8s cubic-bezier(0.22,1,0.36,1) both 0.28s; }
+      .hero .np-stats-row                 { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) both 0.42s; }
+      .hero .np-double-rule:last-child    { animation-delay: 0.55s; }
+      /* Floating icon in bento search card */
+      .bih-icon-wrap { animation: iconFloat 3.2s ease-in-out infinite; }
+
+      /* ── BENTO INPUT HERO entrance ── */
+      .bento-input-hero { animation: fadeUp 0.75s cubic-bezier(0.22,1,0.36,1) both 0.18s; }
+
+      /* ── VERIFY BUTTON shimmer ── */
+      .btn-primary { overflow: hidden; position: relative; }
+      .btn-primary::after {
+        content: '';
+        position: absolute; top: 0; left: -80%; bottom: 0; width: 50%;
+        background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+        transform: skewX(-20deg);
+        animation: shimmerSweep 3.8s ease-in-out infinite 2s;
+        pointer-events: none;
+      }
+
+      /* ── BUTTON RIPPLE (span injected via JS) ── */
+      .btn-ripple {
+        position: absolute; border-radius: 50%;
+        background: rgba(255,255,255,0.22);
+        transform: scale(0);
+        animation: rippleOut 0.6s ease-out forwards;
+        pointer-events: none;
+      }
+
+      /* ── CHIP hover ── */
+      .chip { transition: all 0.18s cubic-bezier(0.22,1,0.36,1); }
+      .chip:hover { transform: translateY(-2px) scale(1.07); }
+
+      /* ── BENTO CARD stagger (anim class set via JS) ── */
+      .bento-card.anim-in {
+        animation: bentoPop 0.58s cubic-bezier(0.22,1,0.36,1) both;
+        animation-delay: var(--stagger, 0s);
+      }
+
+      /* ── CARD HOVER LIFT + glow ── */
+      .bento-card { transition: transform 0.22s cubic-bezier(0.22,1,0.36,1), box-shadow 0.22s ease; }
+      .bento-card:hover { transform: translateY(-4px); }
+      .b-score:hover       { box-shadow: 0 16px 48px rgba(59,130,246,0.2); }
+      .b-decision:hover    { box-shadow: 0 16px 48px rgba(99,102,241,0.14); }
+      .b-checks:hover      { box-shadow: 0 16px 48px rgba(139,92,246,0.2); }
+      .b-violations:hover  { box-shadow: 0 16px 48px rgba(239,68,68,0.14); }
+      .b-matches:hover     { box-shadow: 0 16px 48px rgba(99,102,241,0.16); }
+      .b-suggestions:hover { box-shadow: 0 16px 48px rgba(16,185,129,0.16); }
+
+      /* ── SCORE RING glow pulse ── */
+      .b-score .prob-svg { transition: filter 0.6s ease; }
+      .b-score.ring-glow-red   .prob-svg { animation: ringGlowPulse 2.2s ease-in-out infinite; --ring-glow: rgba(239,68,68,0.6); }
+      .b-score.ring-glow-amber .prob-svg { animation: ringGlowPulse 2.2s ease-in-out infinite; --ring-glow: rgba(245,158,11,0.55); }
+      .b-score.ring-glow-green .prob-svg { animation: ringGlowPulse 2.2s ease-in-out infinite; --ring-glow: rgba(34,197,94,0.6); }
+
+      /* ── CHECKS CARD scan line ── */
+      .b-checks { overflow: hidden; }
+      .b-checks::after {
+        content: '';
+        position: absolute; left: 0; right: 0; height: 2px; top: 0;
+        background: linear-gradient(90deg, transparent, rgba(139,92,246,0.6), transparent);
+        animation: scanLine 3s cubic-bezier(0.4,0,0.6,1) infinite;
+        pointer-events: none;
+      }
+
+      /* ── CHECK PILL stagger ── */
+      .b-checks .check-pill { animation: slideInLeft 0.4s cubic-bezier(0.22,1,0.36,1) both; }
+      .b-checks .check-pill:nth-child(1) { animation-delay: 0.04s; }
+      .b-checks .check-pill:nth-child(2) { animation-delay: 0.12s; }
+      .b-checks .check-pill:nth-child(3) { animation-delay: 0.20s; }
+      .b-checks .check-pill:nth-child(4) { animation-delay: 0.28s; }
+
+      /* ── VIOLATION ITEMS stagger ── */
+      .v-item { animation: slideInLeft 0.38s cubic-bezier(0.22,1,0.36,1) both; }
+      .v-item:nth-child(1) { animation-delay: 0.04s; }
+      .v-item:nth-child(2) { animation-delay: 0.10s; }
+      .v-item:nth-child(3) { animation-delay: 0.16s; }
+      .v-item:nth-child(4) { animation-delay: 0.22s; }
+      .v-item:nth-child(5) { animation-delay: 0.28s; }
+
+      /* ── METRICS GRID numbers pop in ── */
+      .dm-value { animation: scalePop 0.42s cubic-bezier(0.34,1.56,0.64,1) both; }
+      .dm-item:nth-child(1) .dm-value { animation-delay: 0.10s; }
+      .dm-item:nth-child(2) .dm-value { animation-delay: 0.18s; }
+      .dm-item:nth-child(3) .dm-value { animation-delay: 0.26s; }
+      .dm-item:nth-child(4) .dm-value { animation-delay: 0.34s; }
+
+      /* ── MATCH ROW hover ── */
+      .match-row { transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease; }
+      .match-row:hover { transform: translateX(4px); }
+
+      /* ── SUGGESTION CHIP hover ── */
+      .suggestion-chip { transition: all 0.18s cubic-bezier(0.22,1,0.36,1); }
+      .suggestion-chip:hover { transform: translateY(-3px) scale(1.05); }
+
+      /* ── INPUT focus ── */
+      .bento-input-hero input[type='text'] {
+        transition: border-color 0.25s, box-shadow 0.25s, transform 0.2s cubic-bezier(0.22,1,0.36,1);
+      }
+      .bento-input-hero input[type='text']:focus { transform: scale(1.007); }
+
+      /* ── STATUS BANNER slide in ── */
+      #statusBanner { animation: fadeIn 0.45s ease both; }
+
+      /* ── DECISION BODY text reveals ── */
+      .decision-body h3 { animation: fadeUp 0.4s ease both 0.12s; }
+      .decision-body p  { animation: fadeUp 0.4s ease both 0.22s; }
+
+      /* ── BENTO RESPONSIVE ── */
+      @media (max-width: 900px) {
+        .bento-results {
+          grid-template-columns: 190px 1fr;
+          grid-template-areas:
+            "score decision"
+            "score checks"
+            "violations violations"
+            "matches matches"
+            "suggestions suggestions";
         }
-        .hero {
-          padding: 28px 14px;
-        }
-        .hero h1 {
-          font-size: 24px;
-        }
-        .main {
-          padding: 18px 14px;
-        }
-        .stats-grid {
+      }
+      @media (max-width: 620px) {
+        .bento-results {
           grid-template-columns: 1fr;
+          grid-template-areas:
+            "score" "decision" "checks"
+            "violations" "matches" "suggestions";
         }
-        .prob-row {
-          flex-direction: column;
-          text-align: center;
-        }
-        .check-pills {
-          justify-content: center;
-        }
-        .hero-badges {
-          flex-wrap: wrap;
-          border-radius: 8px;
-        }
-        .hero-sep {
-          display: none;
-        }
+        .bento-input-hero { padding: 20px 16px; }
+        .bih-footer { flex-direction: column; align-items: stretch; }
+        .bento-input-hero .btn-primary { width: 100%; justify-content: center; }
       }
     </style>
   </head>
@@ -1047,144 +1882,215 @@
           ><i data-lucide="shield"></i> Admin Panel</a
         >
       </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <svg class="tt-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        <svg class="tt-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <span class="tt-label-dark">Light</span>
+        <span class="tt-label-light">Dark</span>
+      </button>
     </nav>
 
     <header class="hero">
-      <h1>Press Registrar General of India</h1>
-      <p class="hero-sub">
-        Title Uniqueness &amp; Compliance Verification System
-      </p>
-      <div class="hero-badges">
-        <div class="hero-badge">
-          <i data-lucide="book-open"></i
-          ><strong id="hero-total-titles">...</strong> Registered Titles
-        </div>
-        <div class="hero-sep"></div>
-        <div class="hero-badge">
-          <i data-lucide="layers"></i> 5-Priority Matching
-        </div>
-        <div class="hero-sep"></div>
-        <div class="hero-badge"><i data-lucide="zap"></i> Real-time</div>
+
+      <!-- ══ Top double rule ══ -->
+      <div class="np-double-rule"></div>
+
+      <!-- ══ Edition line ══ -->
+      <div class="np-edition-row">
+        <span>Vol. XXIV &nbsp;·&nbsp; No. 1</span>
+        <span>Ministry of Information &amp; Broadcasting</span>
+        <span id="np-date">New Delhi</span>
       </div>
+
+      <!-- ══ Thin rule ══ -->
+      <div class="np-thin-rule"></div>
+
+      <!-- ══ Masthead ══ -->
+      <div class="np-masthead">
+        <div class="np-masthead-eyebrow">Official Publication Registry</div>
+        <div class="np-masthead-title">
+          Press <span class="np-red">Registrar</span> General of India
+        </div>
+        <div class="np-masthead-sub">Title Uniqueness &amp; Compliance Verification System</div>
+      </div>
+
+      <!-- ══ Thin rule ══ -->
+      <div class="np-thin-rule"></div>
+
+      <!-- ══ Column stats ══ -->
+      <div class="np-stats-row">
+        <div class="np-stat-col">
+          <strong id="hero-total-titles">…</strong>
+          <span>Registered Titles</span>
+        </div>
+        <div class="np-col-div"></div>
+        <div class="np-stat-col">
+          <strong>5</strong>
+          <span>Priority Match Levels</span>
+        </div>
+        <div class="np-col-div"></div>
+        <div class="np-stat-col">
+          <strong>Live</strong>
+          <span>Real-time Analysis</span>
+        </div>
+      </div>
+
+      <!-- ══ Bottom double rule ══ -->
+      <div class="np-double-rule"></div>
+
     </header>
 
     <main class="main">
       <!-- TAB 1: VALIDATOR -->
       <section id="validator" class="tab-content active">
-        <div class="validator-wrap">
+
+        <!-- ─── SEARCH HERO ─── -->
+        <div class="bento-input-hero">
+          <!-- newspaper kicker strip -->
+          <div class="np-kicker-strip">
+            <span class="np-kicker-label">New Application</span>
+            <span class="np-kicker-rule"></span>
+          </div>
+
+          <div class="bih-header">
+            <div class="bih-icon-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                <path d="m9 12 2 2 4-4"/>
+              </svg>
+            </div>
+            <div>
+              <div class="bih-title">Title Uniqueness Check</div>
+              <div class="bih-sub">58,000+ registered titles &nbsp;·&nbsp; 5-priority semantic match &nbsp;·&nbsp; Real-time analysis</div>
+            </div>
+          </div>
+
           <div class="title-input-row input-wrap">
             <i data-lucide="file-text" class="input-icon"></i>
-            <input
-              type="text"
-              id="titleInput"
-              placeholder="Enter proposed publication title..."
-              autocomplete="off"
-            />
+            <input type="text" id="titleInput" placeholder="Enter proposed publication title…" autocomplete="off"/>
           </div>
-          <div class="chips">
-            <span class="chip" onclick="fillInput('Dainik Jagran')"
-              >Dainik Jagran</span
-            >
-            <span class="chip" onclick="fillInput('CBI Times')">CBI Times</span>
-            <span class="chip" onclick="fillInput('Pratidin Sandhya')"
-              >Pratidin Sandhya</span
-            >
-            <span class="chip" onclick="fillInput('Tech Horizon')"
-              >Tech Horizon</span
-            >
-            <span class="chip" onclick="fillInput('Morning Herald')"
-              >Morning Herald</span
-            >
-          </div>
-          <div class="verify-btn-row">
+
+          <div class="bih-footer">
+            <div class="chips">
+              <span class="chip" onclick="fillInput('Dainik Jagran')">Dainik Jagran</span>
+              <span class="chip" onclick="fillInput('CBI Times')">CBI Times</span>
+              <span class="chip" onclick="fillInput('Pratidin Sandhya')">Pratidin Sandhya</span>
+              <span class="chip" onclick="fillInput('Tech Horizon')">Tech Horizon</span>
+              <span class="chip" onclick="fillInput('Morning Herald')">Morning Herald</span>
+            </div>
             <button class="btn btn-primary" id="verifyBtn">
               <i data-lucide="shield-check"></i> Verify Title
             </button>
           </div>
           <div id="validator-loader" class="loader hidden"></div>
+        </div>
 
-          <div id="resultsArea" class="hidden">
-            <div class="result-card">
-              <div id="statusBanner" class="result-banner"></div>
-              <div class="result-body">
-                <div class="prob-row">
-                  <div class="ring-wrap">
-                    <svg class="prob-svg" viewBox="0 0 100 100">
-                      <circle class="ring-track" cx="50" cy="50" r="42" />
-                      <circle
-                        class="ring-fill"
-                        id="probRingFill"
-                        cx="50"
-                        cy="50"
-                        r="42"
-                        stroke-dasharray="264"
-                        stroke-dashoffset="264"
-                      />
-                    </svg>
-                    <div class="ring-label">
-                      <span class="ring-pct" id="probVal">0%</span>
-                      <span class="ring-text">Approval</span>
-                    </div>
-                  </div>
-                  <div class="prob-info">
-                    <h3 id="probTitle">Analysing...</h3>
-                    <p id="probDesc"></p>
-                    <div class="check-pills" id="checksRow"></div>
-                  </div>
-                </div>
+        <!-- ─── BENTO RESULTS GRID ─── -->
+        <div id="resultsArea" class="hidden bento-results">
 
-                <div id="reasonsArea"></div>
-                <div id="similarTitlesArea"></div>
-                <div id="suggestionsArea"></div>
-
-                <!-- Request Approval Button -->
-                <div
-                  id="requestApprovalArea"
-                  style="
-                    margin-top: 24px;
-                    padding-top: 24px;
-                    border-top: 1px solid var(--border);
-                    display: none;
-                  "
-                >
-                  <button
-                    id="requestApprovalBtn"
-                    class="btn"
-                    style="
-                      width: 100%;
-                      padding: 14px;
-                      background: var(--blue-dim);
-                      color: var(--blue);
-                      border: 1px solid rgba(59, 130, 246, 0.2);
-                      font-size: 14px;
-                      font-weight: 600;
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      gap: 8px;
-                    "
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" x2="12" y1="3" y2="15" />
-                    </svg>
-                    Request Admin Approval
-                  </button>
-                </div>
+          <!-- 1 · SCORE CARD (spans 2 rows on left) -->
+          <div class="bento-card b-score">
+            <div class="bc-head">
+              <span class="bc-icon bc-icon-blue">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+                </svg>
+              </span>
+              Approval Score
+            </div>
+            <div class="ring-wrap">
+              <svg class="prob-svg" viewBox="0 0 100 100">
+                <circle class="ring-track" cx="50" cy="50" r="42"/>
+                <circle class="ring-fill" id="probRingFill" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"/>
+              </svg>
+              <div class="ring-label">
+                <span class="ring-pct" id="probVal">—</span>
+                <span class="ring-text">Approval</span>
               </div>
             </div>
+            <div class="score-sub">Weighted compliance score</div>
           </div>
+
+          <!-- 2 · DECISION CARD -->
+          <div class="bento-card b-decision">
+            <div id="statusBanner" class="result-banner"></div>
+            <div id="rejectionWarning"></div>
+            <div class="decision-body">
+              <h3 id="probTitle">—</h3>
+              <p id="probDesc"></p>
+              <div class="decision-metrics" id="metricsGrid" style="display:none"></div>
+            </div>
+            <div id="requestApprovalArea" style="display:none">
+              <button id="requestApprovalBtn" class="btn btn-submit-approval">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" x2="12" y1="3" y2="15"/>
+                </svg>
+                Request Admin Approval
+              </button>
+            </div>
+          </div>
+
+          <!-- 3 · CHECKS CARD -->
+          <div class="bento-card b-checks">
+            <div class="bc-head">
+              <span class="bc-icon bc-icon-violet">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                  <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                  <circle cx="12" cy="12" r="3"/><path d="m16 16-1.5-1.5"/>
+                </svg>
+              </span>
+              Analysis Checks
+            </div>
+            <div class="check-pills" id="checksRow"></div>
+          </div>
+
+          <!-- 4 · VIOLATIONS CARD -->
+          <div class="bento-card b-violations">
+            <div class="bc-head">
+              <span class="bc-icon bc-icon-red">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/>
+                  <line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/>
+                </svg>
+              </span>
+              Flags &amp; Violations
+            </div>
+            <div id="reasonsArea"></div>
+          </div>
+
+          <!-- 5 · MATCHES CARD -->
+          <div class="bento-card b-matches">
+            <div class="bc-head">
+              <span class="bc-icon bc-icon-indigo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 3 6 8 2 8"/><polyline points="18 3 18 8 22 8"/>
+                  <path d="M2 8a10 10 0 0 1 20 0"/>
+                  <polyline points="6 21 6 16 2 16"/><polyline points="18 21 18 16 22 16"/>
+                  <path d="M2 16a10 10 0 0 0 20 0"/>
+                </svg>
+              </span>
+              Similar Matches
+            </div>
+            <div id="similarTitlesArea"></div>
+          </div>
+
+          <!-- 6 · SUGGESTIONS CARD -->
+          <div class="bento-card b-suggestions">
+            <div class="bc-head">
+              <span class="bc-icon bc-icon-emerald">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/>
+                  <path d="M9 18h6"/><path d="M10 22h4"/>
+                </svg>
+              </span>
+              Alternative Titles
+            </div>
+            <div id="suggestionsArea"></div>
+          </div>
+
         </div>
       </section>
 
@@ -1357,6 +2263,83 @@
       const API = 'http://127.0.0.1:8000/api';
       const CIRC = 2 * Math.PI * 42; // ~264
 
+      // Newspaper edition date
+      (function() {
+        const el = document.getElementById('np-date');
+        if (el) el.textContent = new Date().toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        }) + ' · New Delhi';
+      })();
+
+      // ── AURORA BACKGROUND BLOBS ──
+      ['aurora-blob-1', 'aurora-blob-2', 'aurora-blob-3'].forEach(cls => {
+        const b = document.createElement('div');
+        b.className = 'aurora-blob ' + cls;
+        document.body.prepend(b);
+      });
+
+      // ── VERIFY BUTTON RIPPLE ──
+      document.getElementById('verifyBtn').addEventListener('mousedown', function(e) {
+        const rect = this.getBoundingClientRect();
+        const r = document.createElement('span');
+        r.className = 'btn-ripple';
+        const sz = Math.max(rect.width, rect.height);
+        r.style.cssText = `width:${sz}px;height:${sz}px;left:${e.clientX - rect.left - sz/2}px;top:${e.clientY - rect.top - sz/2}px;position:absolute;`;
+        this.appendChild(r);
+        setTimeout(() => r.remove(), 700);
+      });
+
+      // ── COUNT-UP UTILITY ──
+      function animateCount(el, target, duration = 900, suffix = '') {
+        if (!el) return;
+        const start = performance.now();
+        (function tick(now) {
+          const p = Math.min((now - start) / duration, 1);
+          const ease = 1 - Math.pow(1 - p, 3);
+          el.textContent = Math.round(target * ease).toLocaleString('en-IN') + suffix;
+          if (p < 1) requestAnimationFrame(tick);
+        })(start);
+      }
+
+      // ── BENTO CARD STAGGER TRIGGER ──
+      function triggerBentoAnim() {
+        document.querySelectorAll('.bento-results .bento-card').forEach((card, i) => {
+          card.classList.remove('anim-in');
+          void card.offsetWidth; // reflow to restart animation
+          card.style.setProperty('--stagger', (i * 0.08) + 's');
+          card.classList.add('anim-in');
+        });
+      }
+
+      // ── SCORE RING ANIMATED FILL ──
+      function animateRing(prob, color) {
+        const fill  = document.getElementById('probRingFill');
+        const pv    = document.getElementById('probVal');
+        const scoreCard = document.querySelector('.b-score');
+
+        // Reset to 0 instantly then animate to target
+        fill.style.transition = 'none';
+        fill.style.strokeDashoffset = CIRC;
+        fill.style.stroke = color;
+        pv.style.color = color;
+        pv.textContent = '0%';
+
+        void fill.getBoundingClientRect(); // force reflow
+
+        fill.style.transition = 'stroke-dashoffset 1.3s cubic-bezier(0.34,1.05,0.64,1)';
+        fill.style.strokeDashoffset = CIRC * (1 - prob / 100);
+
+        animateCount(pv, prob, 1200, '%');
+
+        // Add glow class after ring starts drawing
+        setTimeout(() => {
+          scoreCard.classList.remove('ring-glow-red', 'ring-glow-amber', 'ring-glow-green');
+          if (prob < 30)      scoreCard.classList.add('ring-glow-red');
+          else if (prob < 60) scoreCard.classList.add('ring-glow-amber');
+          else                scoreCard.classList.add('ring-glow-green');
+        }, 600);
+      }
+
       lucide.createIcons();
 
       // ── Navigation ──
@@ -1420,6 +2403,11 @@
 
       function renderResults(data) {
         document.getElementById('resultsArea').classList.remove('hidden');
+        document.getElementById('rejectionWarning').innerHTML = '';
+        document.getElementById('metricsGrid').style.display = 'none';
+
+        // Trigger staggered entrance for all bento cards
+        triggerBentoAnim();
 
         // Use new decision if available, fallback to verdict
         const decision = data.decision || data.verdict;
@@ -1457,12 +2445,9 @@
             : data.approval_probability;
         const prob = Math.round(score);
         const color = probColor(prob);
-        const fill = document.getElementById('probRingFill');
-        fill.style.stroke = color;
-        fill.style.strokeDashoffset = CIRC * (1 - prob / 100);
-        const pv = document.getElementById('probVal');
-        pv.innerText = prob + '%';
-        pv.style.color = color;
+
+        // Animated ring fill + count-up + glow
+        animateRing(prob, color);
 
         document.getElementById('probTitle').innerText = approved
           ? 'Likely to be Approved'
@@ -1470,15 +2455,33 @@
             ? 'Pending Review'
             : 'Likely to be Rejected';
 
-        // Show metrics breakdown if available
+        // Show metrics breakdown in bento metrics grid
         if (data.evaluation_metrics) {
           const metrics = data.evaluation_metrics;
-          document.getElementById('probDesc').innerHTML = `
-            <strong>Score Breakdown:</strong><br/>
-            Uniqueness: ${(metrics.max_similarity * 100).toFixed(1)}% | 
-            Rule Compliance: ${(metrics.rule_compliance * 100).toFixed(1)}% | 
-            Prefix/Suffix: ${(metrics.prefix_suffix * 100).toFixed(1)}% | 
-            Combination: ${(metrics.combination * 100).toFixed(1)}%
+          document.getElementById('probDesc').innerText = approved
+            ? 'Meets all compliance requirements and uniqueness checks.'
+            : pendingAdmin
+              ? 'Requires manual review by an administrator before approval.'
+              : 'Flagged for similarity or compliance violations.';
+          const mg = document.getElementById('metricsGrid');
+          mg.style.display = 'grid';
+          mg.innerHTML = `
+            <div class="dm-item">
+              <div class="dm-label">Uniqueness</div>
+              <div class="dm-value" style="color:#60a5fa">${(100 - metrics.max_similarity * 100).toFixed(0)}%</div>
+            </div>
+            <div class="dm-item">
+              <div class="dm-label">Rule Score</div>
+              <div class="dm-value" style="color:#a78bfa">${(metrics.rule_compliance * 100).toFixed(0)}%</div>
+            </div>
+            <div class="dm-item">
+              <div class="dm-label">Prefix OK</div>
+              <div class="dm-value" style="color:#34d399">${(metrics.prefix_suffix * 100).toFixed(0)}%</div>
+            </div>
+            <div class="dm-item">
+              <div class="dm-label">No Combo</div>
+              <div class="dm-value" style="color:#fbbf24">${(metrics.combination * 100).toFixed(0)}%</div>
+            </div>
           `;
         } else {
           document.getElementById('probDesc').innerText = approved
@@ -1497,7 +2500,7 @@
             Last rejection: ${hist.last_rejected || 'Unknown'}. 
             ${hist.retry_allowed ? 'Retry is allowed.' : 'Retry is blocked.'}
           `;
-          banner.parentNode.insertBefore(warningDiv, banner.nextSibling);
+          document.getElementById('rejectionWarning').appendChild(warningDiv);
           lucide.createIcons();
         }
 
@@ -1532,7 +2535,7 @@
 
         const reasonsArea = document.getElementById('reasonsArea');
         reasonsArea.innerHTML = '';
-        if (data.rejection_reasons.length) {
+        if (data.rejection_reasons && data.rejection_reasons.length) {
           reasonsArea.innerHTML =
             '<div class="violation-list">' +
             data.rejection_reasons
@@ -1545,12 +2548,13 @@
               })
               .join('') +
             '</div>';
+        } else {
+          reasonsArea.innerHTML = `<div class="bento-empty-state"><i data-lucide="check-circle-2"></i> No violations or flags detected</div>`;
         }
 
         const simArea = document.getElementById('similarTitlesArea');
         simArea.innerHTML = '';
         if (data.priority_matches && data.priority_matches.length) {
-          simArea.innerHTML = `<div class="matches-title"><i data-lucide="git-compare"></i> Existing Title Matches</div>`;
           data.priority_matches.forEach((g) => {
             const el = document.createElement('div');
             el.className = 'p-group';
@@ -1571,7 +2575,7 @@
           });
         } else {
           simArea.innerHTML =
-            '<p style="color:var(--text-3);font-size:13px;margin-top:14px;">No significant matches found in the registry.</p>';
+            '<div class="bento-empty-state"><i data-lucide="check-circle-2"></i> No significant matches found in the registry</div>';
         }
 
         lucide.createIcons();
@@ -1919,15 +2923,11 @@
       // ── Stats ──
       async function loadStats() {
         const data = await (await fetch(`${API}/stats`)).json();
-        document.getElementById('stat-total-titles').innerText =
-          data.total_titles.toLocaleString();
-        document.getElementById('stat-languages').innerText =
-          data.total_languages;
-        document.getElementById('stat-states').innerText = data.total_states;
-        document.getElementById('stat-disallowed').innerText =
-          data.total_disallowed_words;
-        document.getElementById('hero-total-titles').innerText =
-          data.total_titles.toLocaleString();
+        animateCount(document.getElementById('stat-total-titles'), data.total_titles, 1200);
+        animateCount(document.getElementById('stat-languages'),    data.total_languages, 900);
+        animateCount(document.getElementById('stat-states'),       data.total_states, 900);
+        animateCount(document.getElementById('stat-disallowed'),   data.total_disallowed_words, 900);
+        animateCount(document.getElementById('hero-total-titles'),  data.total_titles, 1400);
 
         const recent = await (await fetch(`${API}/recent`)).json();
         document.getElementById('recentBody').innerHTML =
@@ -1989,6 +2989,19 @@
         lucide.createIcons();
         setupInfiniteScroll();
       };
+
+      // ── THEME TOGGLE ──
+      (function () {
+        const html = document.documentElement;
+        if (localStorage.getItem('prgi-theme') === 'light') html.classList.add('light');
+        document.getElementById('themeToggle').addEventListener('click', () => {
+          document.body.classList.add('theme-transitioning');
+          html.classList.toggle('light');
+          localStorage.setItem('prgi-theme', html.classList.contains('light') ? 'light' : 'dark');
+          lucide.createIcons();
+          setTimeout(() => document.body.classList.remove('theme-transitioning'), 400);
+        });
+      })();
     </script>
   </body>
 </html>

@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git push -u origin ui-changes)"
+      "Bash(git push -u origin ui-changes)",
+      "Bash(git pull origin ui-changes)",
+      "Bash(git stash push -m \"db-file\" -- backend/data/prgi_titles.db)",
+      "Bash(git stash pop stash@{1})"
     ]
   }
 }
