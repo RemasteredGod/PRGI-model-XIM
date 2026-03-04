@@ -568,7 +568,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000
 
 | Decision | Reason |
 |----------|--------|
-| In-memory title cache | Avoids a DB query on every verification; O(1) exact match |
+| In-memory title cache | Avoids a DB query for every verification; O(1) exact match |
 | Precomputed phonetic cache | Eliminates re-running jellyfish on all 70k titles per request; built once at startup |
 | Parallel batch processing | `ThreadPoolExecutor` with 12 workers; I/O-bound translate calls and C-extension work run concurrently |
 | Skip translate for ASCII | English-only titles bypass the Google Translate HTTP call entirely |
