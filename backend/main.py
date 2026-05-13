@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from typing import List, Optional
 from backend.models.schemas import (TitleRequest, TitleResponse, WordRequest, 
@@ -803,4 +804,6 @@ async def api_batch_approve_by_score(request: dict):
         }
     finally:
         conn.close()
+
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
